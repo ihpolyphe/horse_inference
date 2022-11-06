@@ -23,7 +23,7 @@ yearEnd = 2022#終了年を入力
 # 予想したいレースのページID
 assume_id = 2022050402
 # 予想したいレース番号
-race_number =3 
+race_number =5
 
 # vscode 使う-> true
 debag_mode = False
@@ -410,7 +410,7 @@ if debag_mode:
     inference_path = os.path.join("/Users/hayat/Desktop/keiba_analysis/inference/", str(assume_id))
 
 else:
-    inference_horse_name = np.array(pd.read_csv("/mnt/c/Users/hayat/Desktop/keiba_analysis/race_horse_name/"+ str(assume_id) + "_test.csv",encoding="shift_jis",header=None,names = var_name))
+    inference_horse_name = np.array(pd.read_csv("/mnt/c/Users/hayat/Desktop/keiba_analysis/race_horse_name/"+ str(assume_id) + ".csv",encoding="shift_jis",header=None,names = var_name))
     inference_path = os.path.join("/mnt/c/Users/hayat/Desktop/keiba_analysis/inference/", str(assume_id))
 
 # 結果保存ディレクトリを作成
@@ -433,8 +433,8 @@ horse_name_without_nan = [x for x in horse_name if pd.isnull(x) == False and x !
 # 推論したいレースの前走５つのデータ作成
 _,file_name = learning_method.make_past_grades(debag_mode, assume_id, race_number ,horse_name_without_nan, data, yearStart, yearEnd)
 
-# file_name = "/Users/hayat/Desktop/keiba_analysis/index/2022050402/0_20000_2005_2022_index.csv"
-var_Index_this_time = np.array(pd.read_csv(file_name[race_number],encoding="shift_jis",header=None,names = var_name))
+# file_name = "/mnt/c/Users/hayat/Desktop/keiba_analysis/index/2022050402/3_20000_2005_2022_index.csv"
+var_Index_this_time = np.array(pd.read_csv(file_name,encoding="shift_jis",header=None,names = var_name))
 
 index_at_this_time = learning_method.index(var_Index_this_time)
 

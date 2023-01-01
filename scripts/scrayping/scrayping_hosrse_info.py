@@ -5,8 +5,11 @@ import time
 import tqdm
 import pandas as pd
 import os
-
-# ファイル名に馬名があると読み出し失敗する。
+"""
+指定したpage idにおけるレースごとの馬情報をスクレイピングする。(horse name と同じidを設定すること)
+以下のURLにおけるidを指定する。下二けたはレース番号のため、省略してassume_idに設定する。
+"""
+assume_id = 2022090609
 
 def isint(s):  # 整数値を表しているかどうかを判定
     try:
@@ -24,7 +27,7 @@ column=["horse_number", "horse_age", "horse_sex","horse_weight","horse_weight_ch
         "distance","condition","win_rate","連対率","複勝率"]
 
 # https://race.netkeiba.com/race/shutuba.html?race_id=202205040102　で推論したい日付を選択して12レース分の馬名を取得
-assume_id = 2022090407
+
 houseInfo = []
 
 # vscode 使う-> true

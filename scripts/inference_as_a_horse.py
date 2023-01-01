@@ -30,12 +30,10 @@ from sklearn.metrics import mean_absolute_error as mae
 yearStart = 2005#開始年を入力
 yearEnd = 2022#終了年を入力
 # 予想したいレースのページID
-assume_id = 2022090407
-# 予想したいレース番号
-race_number =0
+assume_id = 2022090609
 
 # vscode 使う-> true
-debag_mode = True
+debag_mode = False
 # リザルトディレクトリの作成
 if debag_mode:
     path = os.path.join('/Users/hayat/Desktop/keiba_analysis/',str(assume_id))

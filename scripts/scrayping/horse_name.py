@@ -1,11 +1,13 @@
-#2022年分
 import requests
 from bs4 import BeautifulSoup
 import time
 import tqdm
-
+"""
+指定したpage idにおけるレースごとの馬名をスクレイピングする。（馬情報と分けているのは、馬名と同時に馬情報を取得しようとするとエラーを吐かれるため。）
+以下のURLにおけるidを指定する。下二けたはレース番号のため、省略してassume_idに設定する。
+"""
 # https://race.netkeiba.com/race/shutuba.html?race_id=202205040102　で推論したい日付を選択して12レース分の馬名を取得
-assume_id = 2022050402
+assume_id = 2022090609
 houseInfo = []
 
 for i in tqdm.tqdm(range(1,13,1)):
@@ -30,7 +32,7 @@ for i in tqdm.tqdm(range(1,13,1)):
         except:
             pass
 
-        print(soup_txt_l)
+        # print(soup_txt_l)
         name=[]#馬の名前
         # for num in range(allnum):
         #     name.append(soup_txt_l[4*num].contents[1].contents[0])

@@ -1,10 +1,12 @@
-#2022年分
 import requests
 from bs4 import BeautifulSoup
 import time
-year = "2005"#西暦を入力
 
-# 過去レース情報のスクレイピング
+"""
+yaerに指定した年の各レースごとの情報をcsvに出力する。
+出力したcsvの情報を用いて学習データを作成する。
+"""
+year = "2005"#西暦を入力
 
 def appendPayBack1(varSoup):#複勝とワイド以外で使用
     varList = []

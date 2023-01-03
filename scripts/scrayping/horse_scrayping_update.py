@@ -1,7 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 import time
-
+import csv 
+import os
 """
 yaerに指定した年の各レースごとの情報をcsvに出力する。
 出力したcsvの情報を用いて学習データを作成する。
@@ -193,11 +194,10 @@ for w in range(len(l)):
 
             if yBreakCounter == 12:#12レース全部ない日が検出されたら、その開催中の最後の開催日と考える
                 break
-
-
-
-import csv
-with open('/mnt/c/Users/hayat/Desktop/keiba_analysis/scrayping/'+year+'.csv', 'w', newline='',encoding='shift_jis') as f:
+svg_path = '/mnt/c/Users/hayat/Desktop/keiba_analysis/data_for_train/scrayping_past_info/'
+if not os.path.exists(svg_path):
+    os.mkdir(svg_path)
+with open(svg_path + year+'.csv', 'w', newline='',encoding='shift_jis') as f:
     csv.writer(f).writerows(List)
 print("終了")
 

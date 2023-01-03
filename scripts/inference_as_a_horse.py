@@ -18,11 +18,10 @@ import datetime
 import lightgbm as lgb
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error as mae
-"""推論精度向上→騎手を説明変数として追加する。"""
-"""タイムのずれを確認する。"""
-
-
-"""推論精度向上→レースごとにすれば向上するかも？？"""
+"""
+馬ごとの情報で、各馬の走破時間を予測する。
+馬体重、オッズなどは動的スクレイピングできていないので、学習データに対して情報量が少ない推論になっている。
+"""
 ## Usage  horse_name.pyで推論したいレースの馬名を取得する。
 ## 同じidにして推論を実行する。
 
@@ -36,9 +35,9 @@ assume_id = 2022090609
 debag_mode = False
 # リザルトディレクトリの作成
 if debag_mode:
-    path = os.path.join('/Users/hayat/Desktop/keiba_analysis/',str(assume_id))
+    path = os.path.join('/Users/hayat/Desktop/keiba_analysis/inference/',str(assume_id))
 else:
-    path = os.path.join('/mnt/c/Users/hayat/Desktop/keiba_analysis/',str(assume_id))
+    path = os.path.join('/mnt/c/Users/hayat/Desktop/keiba_analysis/inference/',str(assume_id))
 if not os.path.exists(path):
     os.mkdir(path)
 
@@ -48,9 +47,9 @@ data = learning_method_train.get_train_data(debag_mode,yearStart,yearEnd)
 var_name = [ 'c{0:02d}'.format(i) for i in range(18) ]#列名を先に作らないと読み込めない
 
 if debag_mode:
-    var_pastIndex = np.array(pd.read_csv("/Users/hayat/Desktop/keiba_analysis/index/"+ str(yearStart)+"_"+str(yearEnd)+'_index.csv',encoding="shift_jis",header=None,names = var_name))
+    var_pastIndex = np.array(pd.read_csv("/Users/hayat/Desktop/keiba_analysis/data_for_train/horse_index/"+ str(yearStart)+"_"+str(yearEnd)+'_index.csv',encoding="shift_jis",header=None,names = var_name))
 else:
-    var_pastIndex = np.array(pd.read_csv("/mnt/c/Users/hayat/Desktop/keiba_analysis/index/"+ str(yearStart)+"_"+str(yearEnd)+'_index.csv',encoding="shift_jis",header=None,names = var_name))
+    var_pastIndex = np.array(pd.read_csv("/mnt/c/Users/hayat/Desktop/keiba_analysis/data_for_train/horse_index/"+ str(yearStart)+"_"+str(yearEnd)+'_index.csv',encoding="shift_jis",header=None,names = var_name))
 
 
 xListBefore = []
@@ -161,6 +160,8 @@ ax.set_title('Light GBM')
 ax.set_xlabel('Predict')
 ax.set_ylabel('Actual')
 plt.scatter(predict, yTest, s=1, alpha = 0.1)
+
+# 結果を出力
 # plt.plot(predict, yTest)
 # plt.show()
 # now = datetime.datetime.now()
@@ -169,19 +170,21 @@ plt.scatter(predict, yTest, s=1, alpha = 0.1)
 
 ## ===========推論フェーズ=============
 print("推論フェーズ")
-var_name_scrayping = [ 'c{0:02d}'.format(i) for i in range(11) ]#列名を先に作らないと読み込めない
+var_name_scrayping = [ 'c{0:02d}'.format(i) for i in range(14) ]#列名を先に作らないと読み込めない
 var_name_name = [ 'c{0:02d}'.format(i) for i in range(2) ]#列名を先に作らないと読み込めない
 
 for i in tqdm.tqdm(range(1,13,1)):
     print("{}R目推論開始".format(i))
     if debag_mode:
-        inference_path = "/Users/hayat/Desktop/keiba_analysis/"+str(assume_id)+"/scrayping_"+str(assume_id)+str(i)+'.csv'
-        horse_name_path = "/Users/hayat/Desktop/keiba_analysis/"+str(assume_id)+"/horse_name_"+str(assume_id)+str(i)+'.csv'
+        inference_path = "/Users/hayat/Desktop/keiba_analysis/inference/"+str(assume_id)+"/scrayping_"+str(assume_id)+str(i)+'.csv'
+        horse_name_path = "/Users/hayat/Desktop/keiba_analysis/inference/"+str(assume_id)+"/horse_name_"+str(assume_id)+str(i)+'.csv'
     else:
-        inference_path = "/mnt/c/Users/hayat/Desktop/keiba_analysis/"+str(assume_id)+"/scrayping_"+str(assume_id)+str(i)+'.csv'
-        horse_name_path = "/mnt/c/Users/hayat/Desktop/keiba_analysis/"+str(assume_id)+"/horse_name_"+str(assume_id)+str(i)+'.csv'
+        inference_path = "/mnt/c/Users/hayat/Desktop/keiba_analysis/inference/"+str(assume_id)+"/scrayping_"+str(assume_id)+str(i)+'.csv'
+        horse_name_path = "/mnt/c/Users/hayat/Desktop/keiba_analysis/inference/"+str(assume_id)+"/horse_name_"+str(assume_id)+str(i)+'.csv'
     horse_information = np.array(pd.read_csv(inference_path,encoding="utf-8",header=None,names = var_name_scrayping))
     horse_name = np.array(pd.read_csv(horse_name_path,encoding="utf8",dtype=str,header=None,names = var_name_name))
+    
+    # 推論データのインデックスと、名称列の削除
     horse_information_list = np.delete(horse_information,0,1)
     horse_information_list = np.delete(horse_information_list,0,0)
     horse_name = np.delete(horse_name,0,1) #インデント列の削除

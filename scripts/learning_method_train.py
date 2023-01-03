@@ -360,9 +360,9 @@ def get_train_data(debag_mode,yearStart,yearEnd):
 
     for for_year in yearList:
         if debag_mode:
-            var_path = "/Users/hayat/Desktop/keiba_analysis/scrayping/"+str(for_year)+".csv"
+            var_path = "/Users/hayat/Desktop/keiba_analysis/data_for_train/scrayping_past_info/"+str(for_year)+".csv"
         else:
-            var_path = "/mnt/c/Users/hayat/Desktop/keiba_analysis/scrayping/"+str(for_year)+".csv"
+            var_path = "/mnt/c/Users/hayat/Desktop/keiba_analysis/data_for_train/scrayping_past_info/"+str(for_year)+".csv"
 
         var_data = pd.read_csv(var_path,encoding='shift_jis',header=None)
         data.append(var_data)

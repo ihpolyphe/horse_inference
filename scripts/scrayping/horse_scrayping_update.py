@@ -7,6 +7,38 @@ import os
 yaerに指定した年の各レースごとの情報をcsvに出力する。
 出力したcsvの情報を用いて学習データを作成する。
 """
+
+# 本スクリプトで記録できるデータは以下の通り
+# 1. 馬の名前
+# 2. 騎手の名前
+# 3. 馬番
+# 4. 走破時間
+# 5. オッズ
+# 6. 通過順
+# 7. 体重
+# 8. 性齢
+# 9. 斤量
+# 10. 上がり
+# 11. 人気
+# 12. レース名
+# 13. 日付
+# 14. 詳細
+# 15. クラス
+# 16. 場所
+# 17. 距離
+# 18. ラウンド
+# 19. コース
+# 20. 天候
+# 21. 単勝
+# 22. 複勝
+# 23. 枠連
+# 24. 馬連
+# 25. ワイド
+# 26. 馬単
+# 27. 三連複
+# 28. 三連単
+
+
 year = "2005"#西暦を入力
 
 def appendPayBack1(varSoup):#複勝とワイド以外で使用
@@ -69,6 +101,7 @@ for w in range(len(l)):
                 soup_txt_l=soup.find_all(class_="txt_l")
                 name=[]#馬の名前
                 for num in range(allnum):
+                    # print("馬名 : ",soup_txt_l[4*num].contents[1].contents[0])
                     name.append(soup_txt_l[4*num].contents[1].contents[0])
 
                 jockey=[]#騎手の名前
@@ -78,6 +111,7 @@ for w in range(len(l)):
                 soup_txt_r=soup.find_all(class_="txt_r")
                 horse_number=[]#馬番
                 for num in range(allnum):
+                    # print("馬番 : ",soup_txt_r[1+5*num].contents[0])
                     horse_number.append(soup_txt_r[1+5*num].contents[0])
 
                 runtime=[]#走破時間
@@ -86,6 +120,9 @@ for w in range(len(l)):
                         runtime.append(soup_txt_r[2+5*num].contents[0])
                     except IndexError:
                         runtime.append(None)
+                
+                # 走破時間から着順を取得してリストに追加
+
 
                 odds=[]#オッズ
                 for num in range(allnum):

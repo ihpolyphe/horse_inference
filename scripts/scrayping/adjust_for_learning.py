@@ -13,13 +13,13 @@ yearList = np.arange(yearStart, yearEnd+1, 1, int)
 data=[]
 
 for for_year in yearList:
-    # var_path = "/Users/hayat/Desktop/keiba_analysis/scrayping_past_info/"+str(for_year)+".csv"
-    var_path = "/mnt/c/Users/hayat/Desktop/keiba_analysis/scrayping_past_info/"+str(for_year)+".csv"
+    # var_path = "/Users/hayat/Desktop/keiba_analysis/data_for_train/scrayping_past_info/"+str(for_year)+".csv"
+    var_path = "/mnt/c/Users/hayat/Desktop/keiba_analysis/data_for_train/scrayping_past_info/"+str(for_year)+".csv"
     var_data = pd.read_csv(var_path,encoding='shift_jis',header=None)
     data.append(var_data)
 
-nameList,jockyList,umabanList,timeList,oddsList,passList,weightList,dWeightList,sexList,oldList,handiList,agariList,ninkiList = [],[],[],[],[],[],[],[],[],[],[],[],[]
-umaList = [nameList,jockyList,umabanList,timeList,oddsList,passList,weightList,dWeightList,sexList,oldList,handiList,agariList,ninkiList]
+nameList,jockyList,umabanList,goal_numberList,timeList,oddsList,passList,weightList,dWeightList,sexList,oldList,handiList,agariList,ninkiList = [],[],[],[],[],[],[],[],[],[],[],[],[],[]
+umaList = [nameList,jockyList,umabanList,goal_numberList,timeList,oddsList,passList,weightList,dWeightList,sexList,oldList,handiList,agariList,ninkiList]
 
 raceNameList,dateList,courseList,classList,surfaceList,distanceList,rotationList,surCondiList,weatherList = [],[],[],[],[],[],[],[],[]
 infoList=[raceNameList,dateList,courseList,classList,surfaceList,distanceList,rotationList,surCondiList,weatherList]
@@ -35,6 +35,9 @@ for for_year in tqdm.tqdm(range(len(data))):
         var_allNumber = len(var)#出走馬の数
         #馬の名前
         nameList.append(var)
+        # 着順は馬の名前順になっているので、リストで格納する
+        goal_number =list( range(1,len(var)+1,1))
+        goal_numberList.append(goal_number)
         #騎手
         jockyList.append(var_dataReplaced[1].split(",")[1:])
         #馬番
@@ -125,6 +128,7 @@ for for_year in tqdm.tqdm(range(len(data))):
         var = var_infoReplaced[1]
         var1 = var.split("年")
         var2 = var1[1].split("月")
+        # 年月日を基準年からの経過日数に変換→数字が大きいほど最新、小さいほど基準年に近い古いデータとなる
         dateList.append((int(var1[0].replace(",",""))-yearStart)*365+int(var2[0])*30+int(var2[1].split("日")[0]))
         #競馬場
         var = var_infoReplaced[2]
@@ -260,47 +264,162 @@ for for_races in tqdm.tqdm(range(len(nameList))):
         var_list.append(for_lists[for_races])
     data.append(var_list)
 
-data = sorted(data, key = lambda x: x[14],reverse = True)#日付が大きい順番に並べる
+data = sorted(data, key = lambda x: x[14],reverse = True)#日付が大きい順番に並べる。理由は次のループで、馬ごとに新しい順に馬のレース順位を格納するため
 '''
 data
 第一指数：全レース数
 第二指数：0~28でレースの情報
 '''
+# 0~28の情報は以下の通り
+# 0:馬名
+# 1:騎手
+# 2:馬番
+# 3:着順
+# 4:走破時間
+# 5:オッズ
+# 6:通過
+# 7:体重
+# 8:体重変化
+# 9:性
+# 10:年齢
+# 11:斤量
+# 12:上がり
+# 13:人気
+# 14:レース名
+# 15:日付
+# 16:競馬場
+# 17:クラス
+# 18:芝ダート
+# 19:距離
+# 20:回り
+# 21:馬場状態
+# 22:単勝
+# 23:複勝
+# 24:枠連
+# 25:馬連
+# 26:ワイド
+# 27:馬単
+# 28:三連複
+# 29:三連単
 
-# print(data[0][0])
+print(data[0][0])
+# dataの情報を可視化
+print("レース数：",len(data))
+print("馬数：",len(data[0][0]))
+print("データ数：",len(data[0][0][0]))
+print("データ：",data[0][0][0])
+# print("データ：",data[0][0][1])
 
 #前走のインデックスのリストを生成する
 dataGet = 20000#何レース分のデータを取得するか
 pastRaces = 6000#過去何レース調べるか
 pastResults = 5#前走何レースを参考にするか
-pastIndexList = []
-lenData = len(data)
+lenData = len(data) # レース数
 
 assume_name = ["アフロビート","グランデスパーダ","ルーラーリッチ","ノーブルヴィクター","カイザーブリッツ","インナーサンクタム","サウザンパンチ","マイショウチャン","サノノウォーリア","リッチハンター","レーガンテソーロ","サイタブラウン","トレジャートレイル","ジェイケイファイン","ミサイルビスケッツ","シゲルタイムフライ"]
-
 dataGet = len(data)
+
+# 過去のレース情報の書き出しファイルパス
+csv_path = '/mnt/c/Users/hayat/Desktop/keiba_analysis/data_for_train/horse_index/'
+if not os.path.exists(csv_path):
+    os.mkdir(csv_path)
+# 過去のレース情報の書き出しファイルを作成
+with open(csv_path + str(yearStart)+"_"+str(yearEnd)+'_index_new_train_data.csv', 'w', newline='',encoding="shift_jis") as f:
+    csv.writer(f).writerow(["馬名","騎手","馬番","着順","走破時間","オッズ","通過","体重","体重変化","性","年齢","斤量","上がり","人気","レース名","日付","競馬場","クラス","芝ダート","距離","回り","馬場状態","単勝","複勝","枠連","馬連","ワイド","馬単","三連複","三連単"])
+
+# すでにサーチ済みの馬であればスキップする
+horse_name_list = []
 for for_races in tqdm.tqdm(range(dataGet)):
-    var_pastIndexList = []#1レース分の馬柱
+     # 過去何レース分のデータを取得するか。現在探査クレーン番号からpastRaces(6000)レースまでを見るか、設定レーンの最大分まで見るかを設定。
     var_min = min([lenData,for_races+pastRaces])
-    for for_horses in range(len(data[for_races][0])):#馬の数、0はnameListを示す
-    # for for_horses in range(len(assume_name)):#馬の数、0はnameListを示す
-        # var_name = assume_name[for_horses]
-        var_name = data[for_races][0][for_horses]
-        var_list = []#何レース前で何着かを記録する
-        for for_pastRaces in range(for_races+1,var_min,1):#ここのレースから前を調べる
-            for for_allNum in range(len(data[for_pastRaces][0])):#照合先の馬の数
-                if var_name == data[for_pastRaces][0][for_allNum]:
-                    var_list.append([for_pastRaces,for_allNum])
-                    break
-            if len(var_list) >= pastResults:#リストの中身が規定の数越えたら終了する
+    #馬の数、0はnameListを示す
+    for for_horses in range(len(data[for_races][0])):
+
+        #そのレースの馬の名前
+        horse_name = data[for_races][0][for_horses] 
+        #何レース前で何着かを記録する
+        horse_past_achive = [] 
+        # horse_past_achiveに馬の名前を記録する
+        horse_past_achive.append(horse_name)
+        # horse_name_listに含まれている馬であればスキップする
+        if horse_name in horse_name_list:
+            print("すでにサーチ済みの馬です。")
+            print("馬名:",horse_name)
+            continue
+
+        #ここのレースから前で馬の過去レース情報をサーチ
+        for  past_race_number in range(for_races+1,var_min,1):
+            #for_racesの次のレースから、探索したいレース分までのレース番号の馬名をserch_horse_name_listに格納
+            for serch_horse_name_list in range(len(data[past_race_number][0])): 
+                # horse_name(実績を調べたい)馬名が過去のレースで一致したら
+                if horse_name == data[past_race_number][0][serch_horse_name_list]: 
+                    # その馬の過去データとして残っているのは data[past_race_number][X][serch_horse_name_list] であるXには該当馬のデータが入っている
+                    # 基準日に対して以下の情報をリストで記録する
+                    # 1:騎手
+                    # 2:馬番
+                    # 3:着順
+                    # 4:走破時間
+                    # 5:オッズ
+                    # 6:通過
+                    # 7:体重
+                    # 8:体重変化
+                    # 9:性
+                    # 10:年齢
+                    # 11:斤量
+                    # 12:上がり
+                    # 13:人気
+                    # 14:レース名
+                    # 15:日付
+                    # 16:競馬場
+                    # 17:クラス
+                    # 18:芝ダート
+                    # 19:距離
+                    # 20:回り
+                    # 21:馬場状態
+                    # 22:単勝
+                    # 23:複勝
+                    # 24:枠連
+                    # 25:馬連
+                    # 26:ワイド
+                    # 27:馬単
+                    # 28:三連複
+                    # 29:三連単
+                    add_data_number_list = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29]
+                    # add_data_number_listのデータをhorse_past_achiveに追加
+                    for add_data_number in add_data_number_list:
+                        # print(f"Debug: data[{past_race_number}][{add_data_number}] = {data[past_race_number][add_data_number]}")
+                        # add_data_number_listが14はint型なのでそのまま追加
+                        int_type_list = [14,15,16,17,18,19,20,21,22,23,24,25,26,27,28]
+                        if add_data_number in int_type_list:
+                            horse_past_achive.append(data[past_race_number][add_data_number])
+                        else:
+                            if isinstance(data[past_race_number][add_data_number], list) or isinstance(data[past_race_number][add_data_number], dict):
+                                try:
+                                    horse_past_achive.append(data[past_race_number][add_data_number][serch_horse_name_list])
+                                except IndexError:
+                                    print(data[past_race_number][add_data_number])
+                                    print(data[past_race_number][0])
+
+                            else:
+                                print(f"Warning: Unexpected data type at data[{past_race_number}][{add_data_number}]")
+                                # データがずれないようにNoneをappendしておく
+                                horse_past_achive.append(None)
+                    # 過去のレース情報をcsvに書き出し
+                    with open(csv_path + str(yearStart)+"_"+str(yearEnd)+'_index_new_train_data_add_goal_number.csv', 'a', newline='',encoding="shift_jis") as f:
+                        csv.writer(f).writerow(horse_past_achive)
+                    # print("馬過去データ追加完了馬名:", horse_name)
+            #リストの中身が規定の数越えたら終了する
+            if len(horse_past_achive) >= pastResults:
+                print("馬過去データpastResults分収集完了,次の馬に行きます。")
+                # horse_name_listに馬の名前を記録する
+                horse_name_list.append(horse_name)
                 break
-        var_pastIndexList.append(var_list)
-    pastIndexList.append(var_pastIndexList)
-# print(pastIndexList)
+        # 馬サーチの最後の処理でhorse_name_listに馬の名前を記録する
+        horse_name_list.append(horse_name)
 
-svg_path = '/mnt/c/Users/hayat/Desktop/keiba_analysis/data_for_train/horse_index/'
-if not os.path.exists(svg_path):
-    os.mkdir(svg_path)
+# svg_path = '/mnt/c/Users/hayat/Desktop/keiba_analysis/data_for_train/horse_index/'
+# if not os.path.exists(svg_path):
+#     os.mkdir(svg_path)
 
-with open(svg_path + str(yearStart)+"_"+str(yearEnd)+'_index.csv', 'w', newline='',encoding="shift_jis") as f:
-    csv.writer(f).writerows(pastIndexList)
+# with open(svg_path + str(yearStart)+"_"+str(yearEnd)+'_index_test.csv', 'w', newline='',encoding="shift_jis") as f:
+#     csv.writer(f).writerows(pastIndexList)

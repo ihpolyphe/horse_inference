@@ -48,3 +48,10 @@ python3 inference_as_a_horse.py
   今は、馬体重や、オッズが動的スクレイピングできていない関係で、推論時に使用できておらず、推論制度が低いことが想定できる。動的スクレイピングによって情報量を増やすことで精度向上を図る。
 
 - デバッグ(vscode) or ターミナル実行の変更をオーギュメンテーションから設定できるようにする。
+
+
+### bs4 install
+In WSL, you can install `bs4` with bellow command.
+```bash
+ python3 -m pip install bs4
+```

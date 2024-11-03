@@ -37,10 +37,10 @@ def make_past_grades(debug, assume_id, i ,target_race, data, yearStart, yearEnd)
     # print(pastIndexList)
     # file_name = '/mnt/c/Users/hayat/Desktop/keiba_analysis/index/sauzi_G3'+str(yearStart)+"_"+str(yearEnd)+'_index.csv'
     if debug:
-        file_name = '/Users/hayat/Desktop/keiba_analysis/'+str(assume_id)+"/index_"+str(assume_id)+str(i) +".csv"
+        file_name = '/Users/hayat/Desktop/keiba_analysis/inference/'+str(assume_id)+"/index_"+str(assume_id)+str(i) +".csv"
         # file_name = '/Users/hayat/Desktop/keiba_analysis/2022050404/index_20220504041.csv'
     else:
-        file_name = '/mnt/c/Users/hayat/Desktop/keiba_analysis/'+str(assume_id)+"/index_"+str(assume_id)+str(i) +".csv"
+        file_name = '/mnt/c/Users/hayat/Desktop/keiba_analysis/inference/'+str(assume_id)+"/index_"+str(assume_id)+str(i) +".csv"
     with open(file_name, 'w', newline='',encoding="shift_jis") as f:
         csv.writer(f).writerows(pastIndexList)
     return pastIndexList, file_name

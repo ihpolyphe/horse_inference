@@ -9,7 +9,7 @@ import sys
 格のレースデータから、trainデータおよび、馬の過去レースデータを抽出するscript
 """
 yearStart = 2005#開始年を入力
-yearEnd = 2022#終了年を入力
+yearEnd = 2005#終了年を入力
 
 yearList = np.arange(yearStart, yearEnd+1, 1, int) 
 data=[]
@@ -44,7 +44,7 @@ infoList=[raceNameList,dateList,courseList,classList,surfaceList,distanceList,ro
 tanList,fukuList,umarenList,wideList,umatanList,renpukuList,rentanList = [],[],[],[],[],[],[]
 paybackList = [tanList,fukuList,umarenList,wideList,umatanList,renpukuList,rentanList]
 
-
+train_data_total_frame = []
 for for_year in tqdm.tqdm(range(len(data))):
     for for_race in range(len(data[for_year][0])):
         # レースごとの保存用リストを初期化
@@ -144,7 +144,7 @@ for for_year in tqdm.tqdm(range(len(data))):
         sexList.append(var1)
         oldList.append(var2)
         horse_age_list.append(var2)
-        horse_sex_list.append(var11) 
+        horse_sex_list.append(var1) 
 
         #斤量
         handiList.append(list(map(float,var_dataReplaced[8].split(",")[1:])))
@@ -307,11 +307,27 @@ for for_year in tqdm.tqdm(range(len(data))):
         rentanList.append(int(var_paybackReplaced[6].split(" ")[-1]))
         number_of_horses = len(name_list_in_race[0])
 
+        # umaban_list_in_raceの小さい順にインデックスを取得
+        sorted_indices = sorted(range(len(umaban_list_in_race[0])), key=lambda k: umaban_list_in_race[0][k])
+
+
         # レースごとの結果がリストに格納されているので、csvに書き出し
         race_data_list = []
+        column_list = []
         # リストが2重になっているので、0番目のリストの指定が必要
-        for i, name in enumerate(name_list_in_race[0]):
-            filename = str(data_list) + str(race_name) + str(place) + ".csv"
+        initialize = True
+        for i in sorted_indices:
+            name = name_list_in_race[0][i]
+            race_common_data = [
+                        umaban_list_in_race[0][0],  # 目的変数は1着の馬番号
+                        str(data_list) ,
+                        str(race_name),
+                        str(place),
+                        class_list_in_race,
+                        number_of_horses,
+                        distance_list ,
+                        condition_list,
+            ]
             race_data = [name, 
                         umaban_list_in_race[0][i],    
                         horse_age_list[0][i], 
@@ -319,25 +335,44 @@ for for_year in tqdm.tqdm(range(len(data))):
                         weight_list_in_race[0][i],
                         weight_change_list_in_race[0][i],
                         handi_list_in_race[0][i],
-                        class_list_in_race,
-                        number_of_horses,
-                        distance_list ,
-                        condition_list,
                         jocky_list_in_race[0][i], 
                         odds_list_in_race[0][i],
-                        str(data_list) ,
-                        str(race_name),
-                        str(place),
                         goal_number_list_in_race[0][i]] # goalは目的変数なので最後においておく
-            race_data_list.append(race_data)
-        # 1レース分のデータをcsvに書き出し
-        column = ["horse_name", "umaban", "horse_age", "horse_sex","horse_weight",
-                  "weight_change","handi","class","number_of_horses","distance","condition",
-                  "jocky","odds","date","race_name", "place", "goal_number"]
+            # 共通データは最初だけ追加
+            if initialize:
+                race_data_list += race_common_data
+                initialize = False
+            race_data_list += race_data
+            # 1レース分のデータをcsvに書き出し
+            # column = ["horse_name_"+str(i), "umaban_"+str(i), "horse_age_"+str(i), "horse_sex_"+str(i),"horse_weight_"+str(i),
+            #         "weight_change_"+str(i),"handi_"+str(i),"class_"+str(i),"number_of_horses_"+str(i),"distance_"+str(i),"condition_"+str(i),
+            #         "jocky_"+str(i),"odds_"+str(i),"date_"+str(i),"race_name_"+str(i), "place_"+str(i), "goal_number_"+str(i)]
+            # column_list += column
+        train_data_total_frame.append(race_data_list)
+# columnを作成
+column_list = []
+race_comon_column = ["target_no1_umaban",
+                    "date",
+                    "race_name",
+                    "place",
+                    "class_list_in_race",
+                    "number_of_horses",
+                    "distance",
+                    "condition"
+                    ]
+for i in range(0,18):
+    if i == 0:
+        column_list += race_comon_column
+    column = ["horse_name_"+str(i), "umaban_"+str(i), "horse_age_"+str(i), "horse_sex_"+str(i),"horse_weight_"+str(i),
+                    "weight_change_"+str(i),"handi_"+str(i),
+                    "jocky_"+str(i),"odds_"+str(i), "goal_number_"+str(i)]
+    column_list += column 
+one_race_horse_data = pd.DataFrame(train_data_total_frame, columns=column_list)
 
-        ]
-        one_race_horse_data = pd.DataFrame(race_data_list,columns=column)
-        one_race_horse_data.to_csv(train_data_path_year + filename,index=False,header=True)
+# データフレームをCSVに書き出し
+one_race_horse_data.to_csv(train_data_path_year +"train_data__sorted"+ str(yearStart) + "_" + str(yearEnd)+ ".csv", index=True, header=True)
+# sys.exit()
+
 data = []
 for for_races in tqdm.tqdm(range(len(nameList))):
     var_list = []#uma,info,payback

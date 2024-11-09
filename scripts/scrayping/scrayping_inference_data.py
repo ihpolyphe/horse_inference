@@ -79,7 +79,6 @@ def get_horse_info(column,assume_url):
 
         yaer_sex=soup.find_all("td",class_='Barei Txt_C')[n-1].contents[0]
         # jokey=soup.find_all("td",class_='Jockey')[n-1]
-        sex_ = yaer_sex[:1]
         year = int(yaer_sex[1:])
         # weight=soup.find_all("td",class_='Txt_C')[n*3]
         weight=float(soup.select('td[class="Txt_C"]')[n-1].contents[0])
@@ -97,14 +96,15 @@ def get_horse_info(column,assume_url):
         # horse_weight_change = horse_weight_change.rstrip(")")
         # horse_weight_change_data = int(horse_weight_change,10)
         horse_weight_change_data = 6
-        # if "牡" == sex:
-        #     sex_ = 0
-        # elif "牝" == sex:
-        #     sex_ = 1
-        # elif "セ" == sex:
-        #     sex_ = 2
-        # else:
-        #     print(sex)
+        sex_ = yaer_sex[:1]
+        if "牡" == sex_: #牡馬、牝馬、セン馬
+            sex_ = 0
+        elif "牝" == sex_:
+            sex_ = 1
+        elif "セ" == sex_:
+            sex_ = 2
+        else:
+            print(sex_)
 
         if "川田" == jokey:
             win_rate =0.281

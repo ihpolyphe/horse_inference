@@ -3,14 +3,31 @@ import numpy as np
 import tqdm
 import csv
 import os
-# 前５走のデータを馬番号別に整理する。
-# レース番号0で一着だった馬の前5レースまでをデータ化する。
+import sys
 
+"""
+格のレースデータから、trainデータおよび、馬の過去レースデータを抽出するscript
+"""
 yearStart = 2005#開始年を入力
 yearEnd = 2022#終了年を入力
 
 yearList = np.arange(yearStart, yearEnd+1, 1, int) 
 data=[]
+
+# 馬の過去データが欲しいのであればTrueにする
+# 学習データだけを撮りたい場合はFalseにする
+request_horse_past_data = False
+
+# 学習用レースごとのデータは以下に保存
+train_data_path = "/mnt/c/Users/hayat/Desktop/keiba_analysis/data_for_train/train/"
+if not os.path.exists(train_data_path):
+
+    os.makedirs(train_data_path)
+
+train_data_path_year = train_data_path + str(yearStart) + "_" + str(yearEnd) + "/"
+if not os.path.exists(train_data_path_year):
+    os.makedirs(train_data_path_year)
+
 
 for for_year in yearList:
     # var_path = "/Users/hayat/Desktop/keiba_analysis/data_for_train/scrayping_past_info/"+str(for_year)+".csv"
@@ -30,18 +47,41 @@ paybackList = [tanList,fukuList,umarenList,wideList,umatanList,renpukuList,renta
 
 for for_year in tqdm.tqdm(range(len(data))):
     for for_race in range(len(data[for_year][0])):
+        # レースごとの保存用リストを初期化
+        name_list_in_race = []
+        jocky_list_in_race = []
+        umaban_list_in_race = []
+        goal_number_list_in_race = []
+        horse_age_list = []
+        horse_sex_list = []
+        weight_list_in_race = []
+        weight_change_list_in_race = []
+        handi_list_in_race  = []
+        class_list_in_race = None
+        number_of_horses = None
+        distance_list = None
+        condition_list = None
+        odds_list_in_race  = []
+        race_name = None
+        data_list = None
+        
+
         var_dataReplaced = data[for_year][0][for_race].replace(' ','').replace('[','').replace('\'','').split("]")
         var = var_dataReplaced[0].split(",")
         var_allNumber = len(var)#出走馬の数
         #馬の名前
         nameList.append(var)
+        name_list_in_race.append(var)
         # 着順は馬の名前順になっているので、リストで格納する
         goal_number =list( range(1,len(var)+1,1))
         goal_numberList.append(goal_number)
+        goal_number_list_in_race.append(goal_number)
         #騎手
         jockyList.append(var_dataReplaced[1].split(",")[1:])
+        jocky_list_in_race.append(var_dataReplaced[1].split(",")[1:])
         #馬番
         umabanList.append(list(map(int,var_dataReplaced[2].split(",")[1:])))
+        umaban_list_in_race.append(list(map(int,var_dataReplaced[2].split(",")[1:])))
         #走破時間
         var = var_dataReplaced[3].split(",")[1:]
         var1 = []
@@ -61,6 +101,7 @@ for for_year in tqdm.tqdm(range(len(data))):
             except ValueError:
                 var1.append(var1[-1])#ひとつ前の値で補間する
         oddsList.append(var1)
+        odds_list_in_race.append(var1)
         #通過
         var = var_dataReplaced[5].split(",")[1:]
         var1 = []
@@ -82,7 +123,9 @@ for for_year in tqdm.tqdm(range(len(data))):
                 var1.append(var2[-1])
                 var2.append(var2[-1])
         weightList.append(var1)
+        weight_list_in_race.append(var1)
         dWeightList.append(var2)
+        weight_change_list_in_race.append(var2)
         #性齢
         var = var_dataReplaced[7].split(",")[1:]
         var1 = []
@@ -100,8 +143,12 @@ for for_year in tqdm.tqdm(range(len(data))):
             var2.append(int(var[n][1:]))
         sexList.append(var1)
         oldList.append(var2)
+        horse_age_list.append(var2)
+        horse_sex_list.append(var11) 
+
         #斤量
         handiList.append(list(map(float,var_dataReplaced[8].split(",")[1:])))
+        handi_list_in_race.append(list(map(float,var_dataReplaced[8].split(",")[1:])))
         #上がり
         var = var_dataReplaced[9].split(",")[1:]
         var1 = []
@@ -124,14 +171,17 @@ for for_year in tqdm.tqdm(range(len(data))):
         var_infoReplaced = data[for_year][1][for_race].replace(' ','').replace('[','').replace('\'','').split("]")[:-2]
         #レースの名前
         raceNameList.append(var_infoReplaced[0])
+        race_name = var_infoReplaced[0]
         #日付
         var = var_infoReplaced[1]
         var1 = var.split("年")
         var2 = var1[1].split("月")
         # 年月日を基準年からの経過日数に変換→数字が大きいほど最新、小さいほど基準年に近い古いデータとなる
         dateList.append((int(var1[0].replace(",",""))-yearStart)*365+int(var2[0])*30+int(var2[1].split("日")[0]))
+        data_list = (int(var1[0].replace(",",""))-yearStart)*365+int(var2[0])*30+int(var2[1].split("日")[0])
         #競馬場
         var = var_infoReplaced[2]
+        place = var
         if "札幌" in var:
             courseList.append(0)
         elif "函館" in var:
@@ -179,6 +229,7 @@ for for_year in tqdm.tqdm(range(len(data))):
             classList.append(2)
         else:
             print(var)
+        class_list_in_race = var1
         #芝、ダート
         var = var_infoReplaced[4]
         if "芝" in var:
@@ -189,8 +240,10 @@ for for_year in tqdm.tqdm(range(len(data))):
             surfaceList.append(2)
         else:
             print(var)
+        condition_list = var
         #距離
         distanceList.append(int(var_infoReplaced[5].replace(",","")))
+        distance_list = int(var_infoReplaced[5].replace(",",""))
         #回り
         var = var_infoReplaced[6]
         if "右" in var:
@@ -252,7 +305,39 @@ for for_year in tqdm.tqdm(range(len(data))):
         renpukuList.append(int(var_paybackReplaced[5].split(" ")[-1]))
         #三連単
         rentanList.append(int(var_paybackReplaced[6].split(" ")[-1]))
+        number_of_horses = len(name_list_in_race[0])
 
+        # レースごとの結果がリストに格納されているので、csvに書き出し
+        race_data_list = []
+        # リストが2重になっているので、0番目のリストの指定が必要
+        for i, name in enumerate(name_list_in_race[0]):
+            filename = str(data_list) + str(race_name) + str(place) + ".csv"
+            race_data = [name, 
+                        umaban_list_in_race[0][i],    
+                        horse_age_list[0][i], 
+                        horse_sex_list[0][i],
+                        weight_list_in_race[0][i],
+                        weight_change_list_in_race[0][i],
+                        handi_list_in_race[0][i],
+                        class_list_in_race,
+                        number_of_horses,
+                        distance_list ,
+                        condition_list,
+                        jocky_list_in_race[0][i], 
+                        odds_list_in_race[0][i],
+                        str(data_list) ,
+                        str(race_name),
+                        str(place),
+                        goal_number_list_in_race[0][i]] # goalは目的変数なので最後においておく
+            race_data_list.append(race_data)
+        # 1レース分のデータをcsvに書き出し
+        column = ["horse_name", "umaban", "horse_age", "horse_sex","horse_weight",
+                  "weight_change","handi","class","number_of_horses","distance","condition",
+                  "jocky","odds","date","race_name", "place", "goal_number"]
+
+        ]
+        one_race_horse_data = pd.DataFrame(race_data_list,columns=column)
+        one_race_horse_data.to_csv(train_data_path_year + filename,index=False,header=True)
 data = []
 for for_races in tqdm.tqdm(range(len(nameList))):
     var_list = []#uma,info,payback
@@ -263,6 +348,12 @@ for for_races in tqdm.tqdm(range(len(nameList))):
     for for_lists in paybackList:
         var_list.append(for_lists[for_races])
     data.append(var_list)
+
+# 馬の過去レースデータが欲しい場合はrequest_horse_past_dataをTrueにする
+if request_horse_past_data:
+    pass
+else:
+    sys.exit()
 
 data = sorted(data, key = lambda x: x[14],reverse = True)#日付が大きい順番に並べる。理由は次のループで、馬ごとに新しい順に馬のレース順位を格納するため
 '''
@@ -302,6 +393,19 @@ data
 # 28:三連複
 # 29:三連単
 
+# "[['テイエムヒスイ', 'シゲルダイノウカイ', 'ヤマニンデクスター', 'アルカライズ', 'ウォーターフロント', 'スズカイエロー', 'サクラモサ', 'インザリピート', 'ワンセカンドキス', 'スイートゴールド'],
+#  ['秋山真一', '小原義之', '四位洋文', '横山典弘', '松田大作', '蛯名正義', '武幸四郎', '松永幹夫', '宮崎光行', '藤岡佑介'],
+#   ['5', '1', '8', '10', '6', '3', '7', '4', '9', '2'], 
+#   ['1:31.3', '1:31.3', '1:31.4', '1:31.5', '1:31.6', '1:31.7', '1:31.8', '1:32.2', '1:32.4', None], 
+#   ['3.8', '7.0', '18.6', '5.0', '88.1', '2.3', '8.9', '74.4', '81.6', '---'],
+#    ['1-2-2', '2-1-1', '9-7-7', '2-3-3', '7-7-7', '5-3-5', '4-3-3', '6-3-5', '7-7-9', None],
+#     ['432(-18)', '462(+4)', '438(-12)', '466(-10)', '492(+6)', '500(-2)', '476(+6)', '448(-8)', '480(-14)', '計不'],
+#      ['牝2', '牡2', '牡2', '牡2', '牡2', '牡2', '牡2', '牝2', '牝2', '牝2'], 
+#      ['54', '54', '54', '54', '54', '54', '54', '54', '54', '53'], 
+#      ['37.5', '37.6', '37.1', '37.5', '37.2', '37.7', '37.8', '38.1', '38.0', None], 
+#      ['1', '7', '8', '6', '3', '7', '4', '8', '2', None]]",
+#      "[['2歳未勝利'], ['2005年8月13日'], ['1回札幌1日目'], ['2歳未勝利'], ['芝'], ['1500'], ['右'], ['良'], ['晴']]",
+#      "[['5', '380'], ['5', '200', '1', '190', '8', '430'], ['1 - 5', '1,290'], ['1 - 5', '540', '5 - 8', '1,110', '1 - 8', '1,330'], ['5 → 1', '2,480'], ['1 - 5 - 8', '5,230'], ['1 - 5 - 8', '5,230']]"
 print(data[0][0])
 # dataの情報を可視化
 print("レース数：",len(data))

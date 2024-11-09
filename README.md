@@ -3,7 +3,7 @@
 LightGBM を使用して馬のタイムを予想する。
 
 ## Usage
-
+### 学習
 1. 過去情報をスクレイピングする。
    結果は`keiba_analysis/data_for_train/scrayping_past_info/`に保存される。
 
@@ -12,7 +12,7 @@ cd scripts/scrayping
 python3 horse_scrayping_update.py
 ```
 
-2. 上の情報から、過去情報のインデックスリストを作成する
+2. 上の情報から、馬の過去レース情報と、学習データを生成する。
    結果は`keiba_analysis/data_for_train/horse_index/`に保存される。
 
 ```
@@ -20,6 +20,10 @@ cd scripts/scrayping
 python3 adjust_for_learning.py
 ```
 
+3. 以下のスクリプトで学習させる。
+
+
+### 推論
 3. 予想したいレースの馬情報を取得する。
    結果は`keiba_analysis/inference/<assume_id>/scrayping_<assume_id>`に馬情報、
    `keiba_analysis/inference/assume_id>/horse_name_<assume_id>`に馬名が保存される。
@@ -29,7 +33,7 @@ cd scripts/scrayping
 python3 scrayping_horse_info.py
 ```
 
-4. 学習&推論を行う。
+4. 推論を行う。
    結果は`keiba_analysis/inference/<assume_id>/inference_horse_time_<assume_id>`にレースごとの馬のタイム推論結果が保存される。
 
 ```
@@ -55,3 +59,6 @@ In WSL, you can install `bs4` with bellow command.
 ```bash
  python3 -m pip install bs4
 ```
+
+# additional
+推論データにオッズを追加

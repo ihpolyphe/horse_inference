@@ -19,7 +19,7 @@ data=[]
 request_horse_past_data = False
 
 # 学習用レースごとのデータは以下に保存
-train_data_path = "/mnt/c/Users/hayat/Desktop/keiba_analysis/data_for_train/train/"
+train_data_path = "/home/hayato/keiba_analysis/data_for_train/train/"
 if not os.path.exists(train_data_path):
 
     os.makedirs(train_data_path)
@@ -31,7 +31,7 @@ if not os.path.exists(train_data_path_year):
 
 for for_year in yearList:
     # var_path = "/Users/hayat/Desktop/keiba_analysis/data_for_train/scrayping_past_info/"+str(for_year)+".csv"
-    var_path = "/mnt/c/Users/hayat/Desktop/keiba_analysis/data_for_train/scrayping_past_info/"+str(for_year)+".csv"
+    var_path = "/home/hayato/keiba_analysis/data_for_train/scrayping_past_info/"+str(for_year)+".csv"
     var_data = pd.read_csv(var_path,encoding='shift_jis',header=None)
     data.append(var_data)
 
@@ -336,7 +336,7 @@ for for_year in tqdm.tqdm(range(len(data))):
                         weight_change_list_in_race[0][i],
                         handi_list_in_race[0][i],
                         jocky_list_in_race[0][i], 
-                        odds_list_in_race[0][i],
+                        # odds_list_in_race[0][i],
                         goal_number_list_in_race[0][i]] # goalは目的変数なので最後においておく
             # 共通データは最初だけ追加
             if initialize:
@@ -363,14 +363,18 @@ race_comon_column = ["target_no1_umaban",
 for i in range(0,18):
     if i == 0:
         column_list += race_comon_column
+    # odds無し
     column = ["horse_name_"+str(i), "umaban_"+str(i), "horse_age_"+str(i), "horse_sex_"+str(i),"horse_weight_"+str(i),
                     "weight_change_"+str(i),"handi_"+str(i),
-                    "jocky_"+str(i),"odds_"+str(i), "goal_number_"+str(i)]
+                    "jocky_"+str(i),"goal_number_"+str(i)]
+    # column = ["horse_name_"+str(i), "umaban_"+str(i), "horse_age_"+str(i), "horse_sex_"+str(i),"horse_weight_"+str(i),
+    #                 "weight_change_"+str(i),"handi_"+str(i),
+    #                 "jocky_"+str(i),"odds_"+str(i), "goal_number_"+str(i)]
     column_list += column 
 one_race_horse_data = pd.DataFrame(train_data_total_frame, columns=column_list)
 
 # データフレームをCSVに書き出し
-one_race_horse_data.to_csv(train_data_path_year +"train_data_sorted"+ str(yearStart) + "_" + str(yearEnd)+ ".csv", index=True, header=True)
+one_race_horse_data.to_csv(train_data_path_year +"train_data_sorted"+ str(yearStart) + "_without_odds" + str(yearEnd)+ ".csv", index=True, header=True)
 # sys.exit()
 
 data = []
@@ -388,7 +392,8 @@ for for_races in tqdm.tqdm(range(len(nameList))):
 if request_horse_past_data:
     pass
 else:
-    sys.exit()
+    # sys.exit()
+    pass
 
 data = sorted(data, key = lambda x: x[14],reverse = True)#日付が大きい順番に並べる。理由は次のループで、馬ごとに新しい順に馬のレース順位を格納するため
 '''

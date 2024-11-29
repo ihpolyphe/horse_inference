@@ -9,7 +9,7 @@ import sys
 格のレースデータから、trainデータおよび、馬の過去レースデータを抽出するscript
 """
 yearStart = 2005#開始年を入力
-yearEnd = 2005#終了年を入力
+yearEnd = 2022#終了年を入力
 
 yearList = np.arange(yearStart, yearEnd+1, 1, int) 
 data=[]
@@ -370,7 +370,7 @@ for i in range(0,18):
 one_race_horse_data = pd.DataFrame(train_data_total_frame, columns=column_list)
 
 # データフレームをCSVに書き出し
-one_race_horse_data.to_csv(train_data_path_year +"train_data__sorted"+ str(yearStart) + "_" + str(yearEnd)+ ".csv", index=True, header=True)
+one_race_horse_data.to_csv(train_data_path_year +"train_data_sorted"+ str(yearStart) + "_" + str(yearEnd)+ ".csv", index=True, header=True)
 # sys.exit()
 
 data = []

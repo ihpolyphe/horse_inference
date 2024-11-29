@@ -64,3 +64,41 @@ In WSL, you can install `bs4` with bellow command.
 推論データにオッズを追加
 
 一位になる馬番を予測する。一位だけしか予測できないように見えて、１位になる馬番の確率値が算出できるので、上位３つで３連単なども予測できるようになるはず。
+
+## 動的スクレイピングセットアップ
+`scrayping_inference_data.py`を実行する場合はいかで動的スクレイピングできる準備を行う.
+
+セットアップ方法は以下に記載の通り。
+https://qiita.com/query1000/items/747b1b34a197a55e7fec
+
+### 実行方法
+`WSL2`側でchromeを起動してあげないとスクレイピングできないので、以下のコマンドでブラウザを起動する。
+```bash
+google-chrome&
+```
+
+その後スクレイピングスクリプトを実行する。不要なブラウザやvscodeなどを起動しているとGPU不足により失敗する可能性あるので、不要なものは閉じた状態で実行すること。
+
+
+```python
+hayato@ihpolyphe:/mnt/c/Users/hayat/Desktop/keiba_analysis/scripts/scrayping$ python3 scrayping_inference_data.py
+オッズ 1: 11.8
+オッズ 2: 26.5
+オッズ 3: 17.4
+オッズ 4: 22.8
+オッズ 5: 25.9
+オッズ 6: 80.2
+オッズ 7: 4.6
+オッズ 8: 27.6
+オッズ 9: 6.5
+オッズ 10: 13.4
+オッズ 11: 73.3
+オッズ 12: 52.3
+オッズ 13: 77.6
+オッズ 14: 203.4
+オッズ 15: 2.3
+```
+
+
+VScode固まった時
+https://stackoverflow.com/questions/43556933/extension-host-terminated-unexpectedly

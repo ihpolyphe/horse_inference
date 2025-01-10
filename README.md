@@ -11,16 +11,26 @@ LightGBM を使用して馬のタイムを予想する。
 cd scripts/scrayping
 python3 horse_scrayping_update.py
 ```
+2019年までの情報はgithub上で管理しているので、それ以降の年は必要に応じて追加でデータを取得してください。
 
 2. 上の情報から、馬の過去レース情報と、学習データを生成する。
    結果は`keiba_analysis/data_for_train/horse_index/`に保存される。
 
+#### 1行にレースごとの情報を保持する方法
+この方法だと学習データが扱いにくく推論結果も悪かったため1行に1馬の情報で学習させる方法も以下でトライ。
 ```
 cd scripts/scrayping
-python3 adjust_for_learning.py
+python3 adjust_for_learning_as_race.py
 ```
+学習と推論は`train_as_race.ipyenb`から実行する。
 
-3. 以下のスクリプトで学習させる。
+#### 1行に1馬の情報を保持する方法
+
+```
+cd scripts/scrayping
+python3 adjust_for_learning_as_horse.py
+```
+学習と推論は`train_as_horse.ipyenb`から実行する。
 
 
 ### 推論
@@ -31,14 +41,6 @@ python3 adjust_for_learning.py
 ```
 cd scripts/scrayping
 python3 scrayping_horse_info.py
-```
-
-4. 推論を行う。
-   結果は`keiba_analysis/inference/<assume_id>/inference_horse_time_<assume_id>`にレースごとの馬のタイム推論結果が保存される。
-
-```
-cd scripts/
-python3 inference_as_a_horse.py
 ```
 
 ## ToDo

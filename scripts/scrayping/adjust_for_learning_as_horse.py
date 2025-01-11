@@ -20,7 +20,7 @@ data=[]
 request_horse_past_data = False
 
 # 学習パス
-is_denso = True
+is_denso = False
 
 # 学習用レースごとのデータは以下に保存
 train_data_path = "/home/hayato/horse_inference/data_for_train/train/"

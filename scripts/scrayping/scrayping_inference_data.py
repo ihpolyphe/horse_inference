@@ -18,7 +18,7 @@ assume_id = "2024070402"
 
 
 def get_horse_info(column,assume_url,index):
-    dynamic = True
+    dynamic = False
     if dynamic:
         print("start dynamic scrayping")
         # Chromeのオプションを設定
@@ -155,19 +155,19 @@ def get_horse_info(column,assume_url,index):
                     None,  # odds
                     None, ## goal_number
         ]
-        race_data_list += race_data
     
-    # ループ終了後
-    race_common_data = [
-            str(None) ,
-            str(class_),
-            str(place),
-            class_,
-            number_of_horse_,
-            distance ,
-            condition,
-    ]
-    race_common_data += race_data_list
+        race_common_data = [
+                str(None) ,
+                str(class_),
+                str(place),
+                class_,
+                number_of_horse_,
+                distance ,
+                condition,
+        ]
+        race_common_data += race_data
+        race_data_list.append(race_common_data)
+
 
     # columnを作成
     column_list = []
@@ -180,29 +180,19 @@ def get_horse_info(column,assume_url,index):
                         "distance",
                         "condition"
                         ]
-    for i in range(count):
-        if i == 0:
-            column_list += race_comon_column
-        # odds無し
-        column = ["horse_name_"+str(i), "umaban_"+str(i), "horse_age_"+str(i), "horse_sex_"+str(i),"horse_weight_"+str(i),
-                        "weight_change_"+str(i),"handi_"+str(i),
-                        "jocky_"+str(i),"odds_"+str(i),"goal_number_"+str(i)]
-        # column = ["horse_name_"+str(i), "umaban_"+str(i), "horse_age_"+str(i), "horse_sex_"+str(i),"horse_weight_"+str(i),
-        #                 "weight_change_"+str(i),"handi_"+str(i),
-        #                 "jocky_"+str(i),"odds_"+str(i), "goal_number_"+str(i)]
-        column_list += column 
+    column = ["horse_name", "umaban", "horse_age", "horse_sex","horse_weight",
+                    "weight_change","handi",
+                    "jocky","odds","goal_number"]
+    column_list = race_comon_column + column 
     print(len(column_list))
     print(column_list)
     print(len(race_common_data))
     # race_common_dataを2次元リストに変換
-    race_common_data = [race_common_data]
-    one_race_horse_data = pd.DataFrame(race_common_data, columns=column_list)
+    # race_common_data = [race_common_data]
+    one_race_horse_data = pd.DataFrame(race_data_list, columns=column_list)
 
     # データフレームをCSVに書き出し
-    if i < 10:
-        one_race_horse_data.to_csv(path+"/inference_data_"+str(assume_id)+"0"+str(index) +".csv")
-    else:
-        one_race_horse_data.to_csv(path+"/inference_data_"+str(assume_id)+str(index) +".csv")
+    one_race_horse_data.to_csv(path+"/inference_data_"+str(assume_id)+str(index) +".csv")
 
 
 
@@ -229,9 +219,9 @@ houseInfo = []
 debag_mode =False
 
 if debag_mode:
-    path = os.path.join('/Users/hayat/Desktop/keiba_analysis/inference/',str(assume_id))
+    path = os.path.join('/Users/hayat/Desktop/horse_inference/inference/',str(assume_id))
 else:
-    path = os.path.join('/home/hayato/keiba_analysis/inference/',str(assume_id))
+    path = os.path.join('/home/hayato/horse_inference/inference/',str(assume_id))
 if not os.path.exists(path):
     os.mkdir(path)
 
@@ -244,6 +234,7 @@ for i in tqdm.tqdm(range(1,13,1)):
         else:
             index = i
         assume_url = "https://race.netkeiba.com/race/shutuba.html?race_id="+ str(assume_id)+ str(index)
+    print(assume_url)
     get_horse_info(column,assume_url, i)
     # assume_id が12桁の場合レース番号まで指定しているので終了する
     if len(assume_id) ==12:

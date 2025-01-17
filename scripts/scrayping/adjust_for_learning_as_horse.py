@@ -369,6 +369,12 @@ one_race_horse_data = pd.DataFrame(train_data_total_frame, columns=column_list)
 one_race_horse_data.to_csv(train_data_path_year +"train_data_sorted" + "_horse_standard_" + str(yearStart) + "_" + str(yearEnd)+ ".csv", index=True, header=True)
 # sys.exit()
 print("finish to write train csv data")
+# 馬の過去レースデータが欲しい場合はrequest_horse_past_dataをTrueにする
+if request_horse_past_data:
+    pass
+else:
+    sys.exit()
+    pass
 data = []
 for for_races in tqdm.tqdm(range(len(nameList))):
     var_list = []#uma,info,payback
@@ -380,12 +386,7 @@ for for_races in tqdm.tqdm(range(len(nameList))):
         var_list.append(for_lists[for_races])
     data.append(var_list)
 
-# 馬の過去レースデータが欲しい場合はrequest_horse_past_dataをTrueにする
-if request_horse_past_data:
-    pass
-else:
-    sys.exit()
-    pass
+
 
 data = sorted(data, key = lambda x: x[14],reverse = True)#日付が大きい順番に並べる。理由は次のループで、馬ごとに新しい順に馬のレース順位を格納するため
 '''

@@ -20,7 +20,7 @@ data=[]
 request_horse_past_data = False
 
 # 学習パス
-is_denso = False
+is_denso = True
 
 # 学習用レースごとのデータは以下に保存
 train_data_path = "/home/hayato/horse_inference/data_for_train/train/"
@@ -185,8 +185,13 @@ for for_year in tqdm.tqdm(range(len(data))):
         var1 = var.split("年")
         var2 = var1[1].split("月")
         # 年月日を基準年からの経過日数に変換→数字が大きいほど最新、小さいほど基準年に近い古いデータとなる
-        dateList.append((int(var1[0].replace(",",""))-yearStart)*365+int(var2[0])*30+int(var2[1].split("日")[0]))
-        data_list = (int(var1[0].replace(",",""))-yearStart)*365+int(var2[0])*30+int(var2[1].split("日")[0])
+        # 年の抽出
+        year = int(var1[0].replace(",",""))
+        # 月の抽出
+        month = int(var2[0])
+        # 日の抽出
+        day = int(var2[1].split("日")[0])
+
         #競馬場
         var = var_infoReplaced[2]
         place = var
@@ -323,6 +328,10 @@ for for_year in tqdm.tqdm(range(len(data))):
         # リストが2重になっているので、0番目のリストの指定が必要
         initialize = True
         for i in sorted_indices:
+            # 年月日は年、月、日プラスfor_raceをつけてすべてのレースと切り分けできるindexも作成する
+            # 例えば、2005年の1月1日であれば、20050101としたい.レースはその後の情報で切り分けられるのでそのまま
+            dateList.append((year*10000+month*100+day)*100)
+            data_list = (year*10000+month*100+day)*100
             race_data_list = []
             name = name_list_in_race[0][i]
             race_common_data = [

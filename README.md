@@ -16,14 +16,6 @@ python3 horse_scrayping_update.py
 2. 上の情報から、馬の過去レース情報と、学習データを生成する。
    結果は`keiba_analysis/data_for_train/horse_index/`に保存される。
 
-#### 1行にレースごとの情報を保持する方法
-この方法だと学習データが扱いにくく推論結果も悪かったため1行に1馬の情報で学習させる方法も以下でトライ。
-```
-cd scripts/scrayping
-python3 adjust_for_learning_as_race.py
-```
-学習と推論は`train_as_race.ipyenb`から実行する。
-
 #### 1行に1馬の情報を保持する方法
 
 ```
@@ -42,6 +34,10 @@ python3 adjust_for_learning_as_horse.py
 cd scripts/scrayping
 python3 scrayping_horse_info.py
 ```
+
+4. 動的スクレイピングに対応していないので、オッズ、馬体重、増減を手入力する。
+
+学習と推論は`train_as_horse.ipyenb`から実行する。
 
 ## ToDo
 

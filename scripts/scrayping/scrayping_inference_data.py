@@ -14,7 +14,7 @@ from selenium.webdriver.common.by import By
 指定したpage idにおけるレースごとの馬情報をスクレイピングする。(horse name と同じidを設定すること)
 以下のURLにおけるidを指定する。下二けたはレース番号のため、省略してassume_idに設定する。
 """
-assume_id = "2024070402"
+assume_id = "2024060508"
 
 
 def get_horse_info(column,assume_url,index):
@@ -105,10 +105,12 @@ def get_horse_info(column,assume_url,index):
             print("馬名取得失敗 IndexError continue")
             continue
 
-        yaer_sex=soup.find_all("td",class_='Barei Txt_C')[n-1].contents[0]
-        # jokey=soup.find_all("td",class_='Jockey')[n-1]
-        year = int(yaer_sex[1:])
-        # weight=soup.find_all("td",class_='Txt_C')[n*3]
+        try:
+            yaer_sex = soup.find_all("td", class_='Barei Txt_C')[n - 1].contents[0]
+            year = int(yaer_sex[1:])
+        except IndexError:
+            print(f"年齢と性別の取得失敗 IndexError: n={n} continue")
+            continue
         try:
             weight=float(soup.select('td[class="Txt_C"]')[n-1].contents[0])
         except ValueError:

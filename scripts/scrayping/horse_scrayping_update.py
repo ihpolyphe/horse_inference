@@ -71,20 +71,25 @@ for w in range(len(l)):
         for y in range(16):#日、12まで十分だけど保険で14
             # if y_loop_judge==1:
             #     break
-            if y<9:
-                url1="https://db.netkeiba.com/race/"+year+l[w]+"0"+str(z+1)+"0"+str(y+1)
+            if y < 9:
+                url1 = f"https://db.netkeiba.com/race/{year}{l[w]}0{z+1}0{y+1}"
             else:
-                url1="https://db.netkeiba.com/race/"+year+l[w]+"0"+str(z+1)+str(y+1)
+                url1 = f"https://db.netkeiba.com/race/{year}{l[w]}0{z+1}{y+1}"
             yBreakCounter = 0#yの更新をbreakするためのカウンター
             for x in range(13):#レース12
-                if x<9:
-                    url=url1+str("0")+str(x+1)
+                if x < 9:
+                    url = f"{url1}0{x+1}"
                 else:
-                    url=url1+str(x+1)
-                r=requests.get(url)
+                    url = f"{url1}{x+1}"
+                # リクエストヘッダーを追加
+                headers = {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+                }
+                r = requests.get(url, headers=headers)
 
                 soup = BeautifulSoup(r.content.decode("euc-jp", "ignore"), "html.parser")#バグ対策でdecode
                 soup_span = soup.find_all("span")
+                print(r)
                 allnum=(len(soup_span)-6)/3#馬の数
                 if allnum < 1:#urlにデータがあるか判定
                     yBreakCounter+=1
@@ -101,19 +106,24 @@ for w in range(len(l)):
                 soup_txt_l=soup.find_all(class_="txt_l")
                 name=[]#馬の名前
                 for num in range(allnum):
-                    # print("馬名 : ",soup_txt_l[4*num].contents[1].contents[0])
-                    name.append(soup_txt_l[4*num].contents[1].contents[0])
-
+                    try:
+                        name.append(soup_txt_l[4*num].contents[1].contents[0])
+                    except IndexError:
+                        name.append(None)
                 jockey=[]#騎手の名前
                 for num in range(allnum):
-                    jockey.append(soup_txt_l[4*num+1].contents[1].contents[0])
-
+                    try:
+                        jockey.append(soup_txt_l[4*num+1].contents[1].contents[0])
+                    except IndexError:
+                        jockey.append(None)
                 soup_txt_r=soup.find_all(class_="txt_r")
                 horse_number=[]#馬番
                 for num in range(allnum):
                     # print("馬番 : ",soup_txt_r[1+5*num].contents[0])
-                    horse_number.append(soup_txt_r[1+5*num].contents[0])
-
+                    try:
+                        horse_number.append(soup_txt_r[1+5*num].contents[0])
+                    except IndexError:
+                        horse_number.append(None)
                 runtime=[]#走破時間
                 for num in range(allnum):
                     try:
@@ -126,8 +136,10 @@ for w in range(len(l)):
 
                 odds=[]#オッズ
                 for num in range(allnum):
-                    odds.append(soup_txt_r[3+5*num].contents[0])
-
+                    try:
+                        odds.append(soup_txt_r[3+5*num].contents[0])
+                    except IndexError:
+                        odds.append(None)
                 soup_nowrap = soup.find_all("td",nowrap="nowrap",class_=None)
                 pas = []#通過順
                 for num in range(allnum):
@@ -138,17 +150,23 @@ for w in range(len(l)):
 
                 weight = []#体重
                 for num in range(allnum):
-                    weight.append(soup_nowrap[3*num+1].contents[0])
-
+                    try:
+                        weight.append(soup_nowrap[3*num+1].contents[0])
+                    except IndexError:
+                        weight.append(None)
                 soup_tet_c = soup.find_all("td",nowrap="nowrap",class_="txt_c")
                 sex_old = []#性齢
                 for num in range(allnum):
-                    sex_old.append(soup_tet_c[6*num].contents[0])
-
+                    try:
+                        sex_old.append(soup_tet_c[6*num].contents[0])
+                    except IndexError:
+                        sex_old.append(None)
                 handi = []#斤量
                 for num in range(allnum):
-                    handi.append(soup_tet_c[6*num+1].contents[0])
-
+                    try:
+                        handi.append(soup_tet_c[6*num+1].contents[0])
+                    except IndexError:
+                        handi.append(None)
                 last = []#上がり
                 for num in range(allnum):
                     try:
@@ -169,9 +187,51 @@ for w in range(len(l)):
                         pop.append(soup_span[3*num+10].contents[0])
                     except IndexError:
                         pop.append(None)
+                
+                # 馬IDを保存
+                horse_links = soup.find_all('a', id=lambda x: x and x.startswith('umalink_'))
 
-                houseInfo = [name,jockey,horse_number,runtime,odds,pas,weight,sex_old,handi,last,pop]
+                horse_ids = []
+                for link in horse_links:
+                    try:
+                        href = link.get('href')
+                        horse_id = href.split('/')[2]  # "/horse/2003106133/" の "2003106133" を抽出
+                        horse_ids.append(horse_id)
+                    except IndexError:
+                        horse_ids.append(None)
+                # 騎手IDを保存
+                jockey_links = soup.find_all('a', href=lambda x: x and '/jockey/result/recent/' in x)
+                jockey_ids = []
+                for link in jockey_links:
+                    try:
+                        href = link.get('href')
+                        jockey_id = href.split('/')[4]  # "/jockey/result/recent/01043/" の "01043" を抽出
+                        jockey_ids.append(jockey_id)
+                    except IndexError:
+                        jockey_ids.append(None)
+                # オーナーIDを抽出
+                owner_links = soup.find_all('a', href=lambda x: x and '/owner/result/recent/' in x)
 
+                owner_ids = []
+                for link in owner_links:
+                    try:
+                        href = link.get('href')
+                        owner_id = href.split('/')[4]  # "/owner/result/recent/637006/" の "637006" を抽出
+                        owner_ids.append(owner_id)
+                    except IndexError:
+                        owner_ids.append(None)
+                # トレーナーIDを抽出
+                trainer_links = soup.find_all('a', href=lambda x: x and '/trainer/result/recent/' in x)
+
+                trainer_ids = []
+                for link in trainer_links:
+                    try:
+                        href = link.get('href')
+                        trainer_id = href.split('/')[4]  # "/trainer/result/recent/00339/" の "00339" を抽出
+                        trainer_ids.append(trainer_id)
+                    except IndexError:
+                        trainer_ids.append(None)
+                houseInfo = [name,jockey,horse_number,runtime,odds,pas,weight,sex_old,handi,last,pop,horse_ids,jockey_id,owner_ids,trainer_ids]
 
                 #レースの情報
                 try:
@@ -191,50 +251,66 @@ for w in range(len(l)):
                         wed=str(var).split("/")[1].split(":")[1][1]
                     except IndexError:
                         var = soup_span[6]
-                        sur=str(var).split("/")[0].split(">")[1][0]
-                        rou=str(var).split("/")[0].split(">")[1][1]
-                        dis=str(var).split("/")[0].split(">")[1].split("m")[0][-4:]
-                        con=str(var).split("/")[2].split(":")[1][1]
-                        wed=str(var).split("/")[1].split(":")[1][1]
+                        sur=None
+                        rou=None
+                        dis=None
+                        con=None
+                        wed=None
                 soup_smalltxt = soup.find_all("p",class_="smalltxt")
-                detail=str(soup_smalltxt).split(">")[1].split(" ")[1]
-                date=str(soup_smalltxt).split(">")[1].split(" ")[0]
-                clas=str(soup_smalltxt).split(">")[1].split(" ")[2].replace(u'\xa0', u' ').split(" ")[0]
-                title=str(soup.find_all("h1")[1]).split(">")[1].split("<")[0]
-                raceInfo = [[title],[date],[detail],[clas],[sur],[dis],[rou],[con],[wed]]#他と合わせるためにリストの中にリストを入れる
-
-                #払い戻しの情報
-                payBack = soup.find_all("table",summary='払い戻し')
-                payBackInfo=[]#単勝、複勝、枠連、馬連、ワイド、馬単、三連複、三連単の順番で格納
-                appendPayBack1(payBack[0].contents[1])#単勝
+                print(soup_smalltxt)
                 try:
-                    payBack[0].contents[5]#これがエラーの時複勝が存在しない
-                    appendPayBack2(payBack[0].contents[3])#複勝
-                    try:
-                        appendPayBack1(payBack[0].contents[7])#馬連
-                    except IndexError:
-                        appendPayBack1(payBack[0].contents[5])#通常は枠連だけど、この時は馬連
-                except IndexError:#この時複勝が存在しない
-                    payBackInfo.append([payBack[0].contents[1].contents[3].contents[0],'110'])#複勝110円で代用
-                    print("複勝なし")
-                    appendPayBack1(payBack[0].contents[3])#馬連
-                appendPayBack2(payBack[1].contents[1])#ワイド
-                appendPayBack1(payBack[1].contents[3])#馬単
-                appendPayBack1(payBack[1].contents[5])#三連複
-                try:
-                    appendPayBack1(payBack[1].contents[7])#三連単
+                    detail=str(soup_smalltxt).split(">")[1].split(" ")[1]
+                    date=str(soup_smalltxt).split(">")[1].split(" ")[0]
+                    clas=str(soup_smalltxt).split(">")[1].split(" ")[2].replace(u'\xa0', u' ').split(" ")[0]
+                    title=str(soup.find_all("h1")[1]).split(">")[1].split("<")[0]
                 except IndexError:
-                    appendPayBack1(payBack[1].contents[5])#三連複を三連単の代わり
-                List.append([houseInfo,raceInfo,payBackInfo])
+                    detail=None
+                    # detail がNoneの場合のurlをチェック
+                    print(url)
+                    date=None
+                    clas=None
+                    title=None
+                raceInfo = [[title],[date],[detail],[clas],[sur],[dis],[rou],[con],[wed]]#他と合わせるためにリストの中にリストを入れる
+                #払い戻しの情報 -> 学習に用いても推論で用いれないかつスクレイピングできなかったのでコメントアウト
 
-                print(detail+str(x+1)+"R")#進捗を表示
+
+
+                # payBack = soup.find_all("table",summary='払い戻し')
+                # payBackInfo=[]#単勝、複勝、枠連、馬連、ワイド、馬単、三連複、三連単の順番で格納
+                # appendPayBack1(payBack[0].contents[1])#単勝
+                # try:
+                #     payBack[0].contents[5]#これがエラーの時複勝が存在しない
+                #     appendPayBack2(payBack[0].contents[3])#複勝
+                #     try:
+                #         appendPayBack1(payBack[0].contents[7])#馬連
+                #     except IndexError:
+                #         appendPayBack1(payBack[0].contents[5])#通常は枠連だけど、この時は馬連
+                # except IndexError:#この時複勝が存在しない
+                #     payBackInfo.append([payBack[0].contents[1].contents[3].contents[0],'110'])#複勝110円で代用
+                #     print("複勝なし")
+                #     appendPayBack1(payBack[0].contents[3])#馬連
+                # appendPayBack2(payBack[1].contents[1])#ワイド
+                # appendPayBack1(payBack[1].contents[3])#馬単
+                # appendPayBack1(payBack[1].contents[5])#三連複
+                # try:
+                #     appendPayBack1(payBack[1].contents[7])#三連単
+                # except IndexError:
+                #     appendPayBack1(payBack[1].contents[5])#三連複を三連単の代わり
+                List.append([houseInfo,raceInfo])
+                print(str(detail)+str(x+1)+"R")#進捗を表示
 
             if yBreakCounter == 12:#12レース全部ない日が検出されたら、その開催中の最後の開催日と考える
                 break
-svg_path = '/mnt/c/Users/hayat/Desktop/keiba_analysis/data_for_train/scrayping_past_info/'
+svg_path = '/home/hayato/horse_inference/data_for_train/scrayping_past_info/'
 if not os.path.exists(svg_path):
     os.mkdir(svg_path)
-with open(svg_path + year+'.csv', 'w', newline='',encoding='shift_jis') as f:
+# horse_info_column = ['name', 'jockey', 'horse_number', 'runtime', 'odds', 'pass', 'weight','sex_old', 'handi', 'last', 'pop', 'horse_id', 'jockey_id', 'owner_id', 'trainer_id']
+# pay_back_column = ['win', 'place', 'frame', 'uma', 'wide', 'uma_tan', 'sanrenpuku', 'sanrentan']    
+# race_info_column = ['title', 'date', 'detail', 'class', 'sur', 'distance', 'rou', 'condition', 'wed']
+
+# total_columns = horse_info_column + race_info_column + pay_back_column
+with open(svg_path + year+'_add_id.csv', 'w', newline='',encoding='shift_jis') as f:
+    # csv.writer(f).writerow(total_columns)
     csv.writer(f).writerows(List)
 print("終了")
 

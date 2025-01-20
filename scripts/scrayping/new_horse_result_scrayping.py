@@ -40,10 +40,13 @@ class Results:
         #race_idをkeyにしてDataFrame型を格納
         race_results = {}
         for race_id in tqdm(race_id_list):
-            time.sleep(1)
+            time.sleep(3)
             try:
                 url = "https://db.netkeiba.com/race/" + race_id
-                headers = {'User-Agent': random.choice(USER_AGENTS)}
+                headers = {'User-Agent': random.choice(USER_AGENTS),
+                           'Referer': "https://db.netkeiba.com/",
+                           'Accept-Language': 'ja-jp,ja;q=0.9,en-US;q=0.8,en;q=0.7'
+                           }
                 html = requests.get(url, headers=headers)
                 html.encoding = "EUC-JP"
                 # メインとなるテーブルデータを取得
@@ -107,7 +110,7 @@ class Results:
         return race_results_df
 
 race_id_list = []
-scrayping_year = "2019"
+scrayping_year = "2020"
 for place in range(1, 11, 1):
     for kai in range(1, 7, 1):
         for day in range(1, 13, 1):
@@ -116,7 +119,11 @@ for place in range(1, 11, 1):
                 race_id_list.append(race_id)
 
 # 取得したresultsをcsvに保存
-save_path = "/home/hayato/horse_inference/data_for_train/train_data/"
+is_denso = True
+if is_denso:
+    save_path = "/home/denso/horse_inference/data_for_train/train_data"
+else:
+    save_path = "/home/hayato/horse_inference/data_for_train/train_data/"
 # 保存先のディレクトリが存在しない場合は作成
 if not os.path.exists(save_path):
     os.makedirs(save_path)

@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 
+#============レースの結果をスクレイピングするクラス============
 class Results:
     @staticmethod
     def scrape(race_id_list):
@@ -40,7 +41,7 @@ class Results:
         #race_idをkeyにしてDataFrame型を格納
         race_results = {}
         for race_id in tqdm(race_id_list):
-            time.sleep(3)
+            time.sleep(1)
             try:
                 url = "https://db.netkeiba.com/race/" + race_id
                 headers = {'User-Agent': random.choice(USER_AGENTS),
@@ -109,6 +110,134 @@ class Results:
         race_results_df = pd.concat([race_results[key] for key in race_results])
         return race_results_df
 
+#==================================馬の過去成績データを処理するクラス
+class HorseResults:
+    @staticmethod
+    def scrape(horse_id_list):
+        """
+        馬の過去成績データをスクレイピングする関数
+
+        Parameters:
+        ----------
+        horse_id_list : list
+            馬IDのリスト
+
+        Returns:
+        ----------
+        horse_results_df : pandas.DataFrame
+            全馬の過去成績データをまとめてDataFrame型にしたもの
+        """
+        USER_AGENTS = [
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:115.0) Gecko/20100101 Firefox/115.0",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Safari/605.1.15",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 Edg/115.0.0.0",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 OPR/85.0.4341.72",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 OPR/85.0.4341.72",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 Vivaldi/5.3.2679.55",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 Vivaldi/5.3.2679.55",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 Brave/1.40.107",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 Brave/1.40.107",
+        ]
+
+        #horse_idをkeyにしてDataFrame型を格納
+        horse_results = {}
+        for horse_id in tqdm(horse_id_list):
+            time.sleep(1)
+            try:
+                url = 'https://db.netkeiba.com/horse/' + horse_id
+                headers = {'User-Agent': random.choice(USER_AGENTS),
+                           'Referer': "https://db.netkeiba.com/",
+                           'Accept-Language': 'ja-jp,ja;q=0.9,en-US;q=0.8,en;q=0.7'
+                           }
+                html = requests.get(url, headers=headers)
+                html.encoding = "EUC-JP"
+                df = pd.read_html(html.text)[2]
+                df.index = [horse_id] * len(df)
+                horse_results[horse_id] = df
+            except IndexError:
+                continue
+            except Exception as e:
+                print(e)
+                break
+            except:
+                break
+
+        #pd.DataFrame型にして一つのデータにまとめる        
+        horse_results_df = pd.concat([horse_results[key] for key in horse_results])
+
+        return horse_results_df
+    
+
+#血統データを処理するクラス
+class Peds:
+    @staticmethod
+    def scrape(horse_id_list):
+        """
+        血統データをスクレイピングする関数
+
+        Parameters:
+        ----------
+        horse_id_list : list
+            馬IDのリスト
+
+        Returns:
+        ----------
+        peds_df : pandas.DataFrame
+            全血統データをまとめてDataFrame型にしたもの
+        """
+        USER_AGENTS = [
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:115.0) Gecko/20100101 Firefox/115.0",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Safari/605.1.15",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 Edg/115.0.0.0",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 OPR/85.0.4341.72",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 OPR/85.0.4341.72",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 Vivaldi/5.3.2679.55",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 Vivaldi/5.3.2679.55",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 Brave/1.40.107",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 Brave/1.40.107",
+        ]
+        peds_dict = {}
+        for horse_id in tqdm(horse_id_list):
+            time.sleep(1)
+            try:
+                url = "https://db.netkeiba.com/horse/ped/" + horse_id
+                headers = {'User-Agent': random.choice(USER_AGENTS),
+                           'Referer': "https://db.netkeiba.com/",
+                           'Accept-Language': 'ja-jp,ja;q=0.9,en-US;q=0.8,en;q=0.7'
+                           }
+                html = requests.get(url, headers=headers)
+                html.encoding = "EUC-JP"
+                df = pd.read_html(html.text)[0]
+
+                #重複を削除して1列のSeries型データに直す
+                generations = {}
+                for i in reversed(range(5)):
+                    generations[i] = df[i]
+                    df.drop([i], axis=1, inplace=True)
+                    df = df.drop_duplicates()
+                ped = pd.concat([generations[i] for i in range(5)]).rename(horse_id)
+
+                peds_dict[horse_id] = ped.reset_index(drop=True)
+            except IndexError:
+                continue
+            except Exception as e:
+                print(e)
+                break
+            except:
+                break
+
+        #列名をpeds_0, ..., peds_61にする
+        peds_df = pd.concat([peds_dict[key] for key in peds_dict], axis=1).T.add_prefix('peds_')
+
+        return peds_df
+    
+#============スクレイピング実行============
 race_id_list = []
 scrayping_year = "2020"
 for place in range(1, 11, 1):
@@ -118,7 +247,7 @@ for place in range(1, 11, 1):
                 race_id = scrayping_year + str(place).zfill(2) + str(kai).zfill(2) + str(day).zfill(2) + str(r).zfill(2)
                 race_id_list.append(race_id)
 
-# 取得したresultsをcsvに保存
+# 取得したrace resultsをcsvに保存
 is_denso = True
 if is_denso:
     save_path = "/home/denso/horse_inference/data_for_train/train_data"
@@ -127,8 +256,13 @@ else:
 # 保存先のディレクトリが存在しない場合は作成
 if not os.path.exists(save_path):
     os.makedirs(save_path)
-
+# レース結果のスクレイピング
 results = Results.scrape(race_id_list)
-
-
-results.to_csv(save_path+"results_" + str(scrayping_year) + ".csv", index=False)
+results.to_csv(save_path+"_results_" + str(scrayping_year) + ".csv", index=False)
+# 馬の過去成績のスクレイピング
+horse_id_list = results['horse_id'].unique()
+horse_results = HorseResults.scrape(horse_id_list)
+horse_results.to_csv(save_path+"horse_results_" + str(scrayping_year) + ".csv", index=False)
+# 馬の血統データのスクレイピング
+horse_scrape_results = HorseResults.scrape(horse_id_list)
+horse_scrape_results.to_csv(save_path+"horse_born_results_" + str(scrayping_year) + ".csv", index=False)

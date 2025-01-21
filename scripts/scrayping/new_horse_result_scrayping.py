@@ -239,7 +239,7 @@ class Peds:
     
 #============スクレイピング実行============
 race_id_list = []
-scrayping_year = "2020"
+scrayping_year = "2022"
 for place in range(1, 11, 1):
     for kai in range(1, 7, 1):
         for day in range(1, 13, 1):

@@ -7,6 +7,7 @@ LightGBM を使用して馬のタイムを予想する。
 1. 過去情報をスクレイピングする。
    結果は`keiba_analysis/data_for_train/scrayping_past_info/`に保存される。
 
+スクレイピングはwslだと接続切れるので、windowsかLinuxでやること
 ```
 cd scripts/scrayping
 python3 horse_scrayping_update.py

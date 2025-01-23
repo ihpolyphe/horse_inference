@@ -295,8 +295,7 @@ class jockeyResults:
                 jockey_results = df.reset_index(drop=True)
                 # 代表馬、順位列を削除
                 jockey_results = jockey_results.drop(["代表馬", "順位"], axis=1)
-                # 2025の行を削除
-                jockey_results = jockey_results.drop(jockey_results.index[1])
+
                 # jockey_idを追加
                 jockey_results["jockey_id"] = jockey_id
                 # print(jockey_results)
@@ -329,16 +328,16 @@ for place in range(1, 11, 1):
 
 # 取得したrace resultsをcsvに保存
 is_denso = False
-is_windows = True
+is_windows = False
 if is_denso:
     if is_windows:
         sys.exit()
-    save_path = "/home/denso/horse_inference/data_for_train/train_data"
+    save_path = "/home/denso/horse_inference/data_for_train/train_data/" + scrayping_year + "/"
 else:
     if not is_windows:
-        save_path = "/home/hayato/horse_inference/data_for_train/train_data/"
+        save_path = "/home/hayato/horse_inference/data_for_train/train_data/" + scrayping_year + "/"
     else:
-        save_path = r"C:\Users\hayat\Desktop\horse_inference\scripts\scrayping"
+        save_path = r"C:\Users\hayat\Desktop\horse_inference\scripts\scrayping" + scrayping_year + "\\"
 
 print(save_path)
 # 保存先のディレクトリが存在しない場合は作成

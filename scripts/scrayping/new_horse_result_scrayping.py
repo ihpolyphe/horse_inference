@@ -274,23 +274,33 @@ class jockeyResults:
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 Brave/1.40.107",
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 Brave/1.40.107",
         ]
+        jockey_results_df = []
         jockey_results = {}
         for jockey_id in tqdm(jockey_id_list):
-            time.sleep(1)
             try:
-                url = 'https://db.netkeiba.com/jockey/' + jockey_id
+                time.sleep(1)
+                url = 'https://db.netkeiba.com/jockey/' + str(jockey_id)
                 headers = {'User-Agent': random.choice(USER_AGENTS),
-                           'Referer': "https://db.netkeiba.com/",
-                           'Accept-Language': 'ja-jp,ja;q=0.9,en-US;q=0.8,en;q=0.7'
-                           }
+                            'Referer': "https://db.netkeiba.com/",
+                            'Accept-Language': 'ja-jp,ja;q=0.9,en-US;q=0.8,en;q=0.7'
+                            }
                 html = requests.get(url, headers=headers)
                 html.encoding = "EUC-JP"
+                # HTMLからデータフレームを取得
                 df = pd.read_html(html.text)[2]
                 df.index = [jockey_id] * len(df)
-                jockey_results[jockey_id] = df
-                # horse_idも保存する。
-                jockey_results[jockey_id]["jockey_id"] = jockey_id
-
+                # 3行目を削除
+                # df = df.drop(df.index[1])
+                # インデックスをリセット
+                jockey_results = df.reset_index(drop=True)
+                # 代表馬、順位列を削除
+                jockey_results = jockey_results.drop(["代表馬", "順位"], axis=1)
+                # 2025の行を削除
+                jockey_results = jockey_results.drop(jockey_results.index[1])
+                # jockey_idを追加
+                jockey_results["jockey_id"] = jockey_id
+                # print(jockey_results)
+                jockey_results_df.append(jockey_results)
             except IndexError:
                 continue
             except Exception as e:
@@ -298,11 +308,14 @@ class jockeyResults:
                 break
             except:
                 break
-
+        # pd.DataFrame型にして一つのデータにまとめる    
+        jockey_results_df = pd.concat(jockey_results_df, ignore_index=True)
+        # print(jockey_results_df)
+        return jockey_results_df
 
 #============スクレイピング実行============
 race_id_list = []
-scrayping_year = "2025"
+scrayping_year = "2024"
 for place in range(1, 11, 1):
 # for place in range(1, 2, 1):
     for kai in range(1, 7, 1):

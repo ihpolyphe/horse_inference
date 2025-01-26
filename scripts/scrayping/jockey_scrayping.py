@@ -42,50 +42,47 @@ class jockeyResults:
         jockey_results_df = []
         jockey_results = {}
         for jockey_id in tqdm(jockey_id_list):
-            time.sleep(1)
-            url = 'https://db.netkeiba.com/jockey/' + str(jockey_id)
-            headers = {'User-Agent': random.choice(USER_AGENTS),
-                        'Referer': "https://db.netkeiba.com/",
-                        'Accept-Language': 'ja-jp,ja;q=0.9,en-US;q=0.8,en;q=0.7'
-                        }
-            html = requests.get(url, headers=headers)
-            html.encoding = "EUC-JP"
-            # HTMLからデータフレームを取得
-            df = pd.read_html(html.text)[2]
-            df.index = [jockey_id] * len(df)
-            # 3行目を削除
-            # df = df.drop(df.index[1])
-            # インデックスをリセット
-            jockey_results = df.reset_index(drop=True)
-            # 代表馬、順位列を削除
-            jockey_results = jockey_results.drop(["代表馬", "順位"], axis=1)
-            # 2025の行を削除
-            jockey_results = jockey_results.drop(jockey_results.index[1])
-            # jockey_idを追加
-            jockey_results["jockey_id"] = jockey_id
-            print(jockey_results)
-            jockey_results_df.append(jockey_results)
+            try:
+                time.sleep(1)
+                url = 'https://db.netkeiba.com/jockey/' + str(jockey_id)
+                headers = {'User-Agent': random.choice(USER_AGENTS),
+                            'Referer': "https://db.netkeiba.com/",
+                            'Accept-Language': 'ja-jp,ja;q=0.9,en-US;q=0.8,en;q=0.7'
+                            }
+                html = requests.get(url, headers=headers)
+                html.encoding = "EUC-JP"
+                # HTMLからデータフレームを取得
+                df = pd.read_html(html.text)[2]
+                df.index = [jockey_id] * len(df)
+                # 3行目を削除
+                # df = df.drop(df.index[1])
+                # インデックスをリセット
+                jockey_results = df.reset_index(drop=True)
+                # 代表馬、順位列を削除
+                jockey_results = jockey_results.drop(["代表馬", "順位"], axis=1)
 
+                # jockey_idを追加
+                jockey_results["jockey_id"] = jockey_id
+                # print(jockey_results)
+                jockey_results_df.append(jockey_results)
+            except IndexError:
+                continue
+            except Exception as e:
+                print(e)
+                break
+            except:
+                break
         # pd.DataFrame型にして一つのデータにまとめる    
         jockey_results_df = pd.concat(jockey_results_df, ignore_index=True)
-        print(jockey_results_df)
+        # print(jockey_results_df)
         return jockey_results_df
 
 
 
 #============スクレイピング実行============
 race_id_list = []
-scrayping_year = "2025"
-for place in range(1, 11, 1):
-# for place in range(1, 2, 1):
-    for kai in range(1, 7, 1):
-    # for kai in range(1, 2, 1):
-        for day in range(1, 13, 1):
-        # for day in range(1, 2, 1):
-            for r in range(1, 13, 1):
-            # for r in range(1, 2, 1):
-                race_id = scrayping_year + str(place).zfill(2) + str(kai).zfill(2) + str(day).zfill(2) + str(r).zfill(2)
-                race_id_list.append(race_id)
+scrayping_year = "2024"
+
 
 # 取得したrace resultsをcsvに保存
 is_denso = False
@@ -93,12 +90,12 @@ is_windows = False
 if is_denso:
     if is_windows:
         sys.exit()
-    save_path = "/home/denso/horse_inference/data_for_train/train_data/train_data"
+    save_path = "/home/denso/horse_inference/data_for_train/train_data/" + str(scrayping_year) + "/"
 else:
     if not is_windows:
-        save_path = "/home/hayato/horse_inference/data_for_train/train_data/train_data"
+        save_path = "/home/hayato/horse_inference/data_for_train/train_data/" + str(scrayping_year) + "/"
     else:
-        save_path = r"C:\Users\hayat\Desktop\horse_inference\data_for_train\train_data\train_data"
+        save_path = r"C:\Users\hayat\Desktop\horse_inference\data_for_train\train_data\train_data" + str(scrayping_year) + "\\"
 
 print(save_path)
 # 保存先のディレクトリが存在しない場合は作成
@@ -106,10 +103,10 @@ if not os.path.exists(save_path):
     os.makedirs(save_path)
 
 # is_saveがTrueだった場合、csvのデータからhorse_id_listを取得
-results = pd.read_csv(save_path+"_results_" + str(scrayping_year) + ".csv",dtype={'jockey_id': str})
+results = pd.read_csv(save_path+"train_data_results_" + str(scrayping_year) + ".csv",dtype={'jockey_id': str})
 
 # テストなので10レース分だけ取得
-results = results.iloc[:3]
+# results = results.iloc[:3]
 
 # jockey_id_listをstr型で取得
 jockey_id_list = results["jockey_id"].astype(str).unique()

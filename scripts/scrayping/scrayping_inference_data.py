@@ -6,10 +6,6 @@ import tqdm
 import pandas as pd
 import os
 
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
 """
 指定したpage idにおけるレースごとの馬情報をスクレイピングする。(horse name と同じidを設定すること)
 以下のURLにおけるidを指定する。下二けたはレース番号のため、省略してassume_idに設定する。
@@ -18,44 +14,44 @@ assume_id = "2024060508"
 
 
 def get_horse_info(column,assume_url,index):
-    dynamic = False
-    if dynamic:
-        print("start dynamic scrayping")
-        # Chromeのオプションを設定
-        chrome_options = webdriver.ChromeOptions()
-        chrome_options.add_argument("--headless")  # ヘッドレスモード
-        chrome_options.add_argument("--no-sandbox")
-        # chrome_options.add_argument("--disable-dev-shm-usage")
-        # chrome_options.add_argument("--disable-gpu")
-        # chrome_options.add_argument("--remote-debugging-port=9222")
-        # chrome_options.binary_location = "/mnt/c/Users/hayat/Downloads/chromedriver-linux64/chromedriver"
-        # chrome_options.binary_location = '/usr/bin/chromium-browser'
-        # SeleniumのWebDriverを設定
-        # driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-        driver = webdriver.Chrome(options=chrome_options)
-        # タイムアウトを設定
-        # driver.set_page_load_timeout(120)
+    # dynamic = False
+    # if dynamic:
+    #     print("start dynamic scrayping")
+    #     # Chromeのオプションを設定
+    #     chrome_options = webdriver.ChromeOptions()
+    #     chrome_options.add_argument("--headless")  # ヘッドレスモード
+    #     chrome_options.add_argument("--no-sandbox")
+    #     # chrome_options.add_argument("--disable-dev-shm-usage")
+    #     # chrome_options.add_argument("--disable-gpu")
+    #     # chrome_options.add_argument("--remote-debugging-port=9222")
+    #     # chrome_options.binary_location = "/mnt/c/Users/hayat/Downloads/chromedriver-linux64/chromedriver"
+    #     # chrome_options.binary_location = '/usr/bin/chromium-browser'
+    #     # SeleniumのWebDriverを設定
+    #     # driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    #     driver = webdriver.Chrome(options=chrome_options)
+    #     # タイムアウトを設定
+    #     # driver.set_page_load_timeout(120)
 
-        try:
-            # 目的のURLにアクセス
-            driver.get(assume_url)
+    #     try:
+    #         # 目的のURLにアクセス
+    #         driver.get(assume_url)
 
-            # ページが完全に読み込まれるまで待機
-            import time
-            time.sleep(5)
-            print(driver)
-            # オッズ情報を取得
-            odds_elements = driver.find_elements(By.CSS_SELECTOR, ".Txt_R.Popular span")
-            odds = [element.text for element in odds_elements]
+    #         # ページが完全に読み込まれるまで待機
+    #         import time
+    #         time.sleep(5)
+    #         print(driver)
+    #         # オッズ情報を取得
+    #         odds_elements = driver.find_elements(By.CSS_SELECTOR, ".Txt_R.Popular span")
+    #         odds = [element.text for element in odds_elements]
 
-            # 結果を表示
-            for i, odd in enumerate(odds):
-                print(f"オッズ {i+1}: {odd}")
+    #         # 結果を表示
+    #         for i, odd in enumerate(odds):
+    #             print(f"オッズ {i+1}: {odd}")
 
-        finally:
-            # ブラウザを閉じる
-            driver.quit()
-        print("end dynamic scrayping")
+    #     finally:
+    #         # ブラウザを閉じる
+    #         driver.quit()
+    #     print("end dynamic scrayping")
 
 
 
@@ -104,6 +100,15 @@ def get_horse_info(column,assume_url,index):
         except IndexError:
             print("馬名取得失敗 IndexError continue")
             continue
+        # 馬のIDを取得する
+        try:
+            horse_id = soup.find("span", class_="HorseName").find("a")['href'].split('/')[-1]
+        except AttributeError:
+            print("馬ID取得失敗 AttributeError continue")
+            continue
+        except IndexError:
+            print("馬ID取得失敗 IndexError continue")
+            continue
 
         try:
             yaer_sex = soup.find_all("td", class_='Barei Txt_C')[n - 1].contents[0]
@@ -120,6 +125,16 @@ def get_horse_info(column,assume_url,index):
         except IndexError:  
             print("騎手取得失敗 IndexError continue")
             jokey = "騎手不明"
+        # 騎手IDを取得する
+        try:
+            jokey_id = soup.select('td[class="Jockey"]')[n-1].contents[1].get('href')
+            jokey_id = jokey_id.split("/")[-2]
+        except AttributeError:
+            print("騎手ID取得失敗 AttributeError continue")
+            continue
+        except IndexError:
+            print("騎手ID取得失敗 IndexError continue")
+            continue
 
         # 以下の情報からジョッキーの体重を取得する
         # <td class="Barei Txt_C">牡2</td>
@@ -154,6 +169,8 @@ def get_horse_info(column,assume_url,index):
                     horse_weight_change_data,
                     jokey_weight,
                     jokey,
+                    horse_id,
+                    jokey_id,
                     None,  # odds
                     None, ## goal_number
         ]
@@ -184,7 +201,7 @@ def get_horse_info(column,assume_url,index):
                         ]
     column = ["horse_name", "umaban", "horse_age", "horse_sex","horse_weight",
                     "weight_change","handi",
-                    "jocky","odds","goal_number"]
+                    "jocky","horse_id","jokey_id","odds","goal_number"]
     column_list = race_comon_column + column 
     print(len(column_list))
     print(column_list)
@@ -219,13 +236,15 @@ houseInfo = []
 
 # vscode 使う-> true
 debag_mode =False
-
+is_denso = True
 if debag_mode:
     path = os.path.join('/Users/hayat/Desktop/horse_inference/inference/',str(assume_id))
 else:
     path = os.path.join('/home/hayato/horse_inference/inference/',str(assume_id))
+if is_denso:
+    path = os.path.join(path, '/home/denso/horse_inference/inference/',str(assume_id))
 if not os.path.exists(path):
-    os.mkdir(path)
+    os.makedirs(path)
 
 for i in tqdm.tqdm(range(1,13,1)):
     if len(assume_id) ==12:
@@ -238,9 +257,13 @@ for i in tqdm.tqdm(range(1,13,1)):
         assume_url = "https://race.netkeiba.com/race/shutuba.html?race_id="+ str(assume_id)+ str(index)
     print(assume_url)
     get_horse_info(column,assume_url, i)
+    
+    # 馬IDと騎手IDに基づいて情報を取得する
+
     # assume_id が12桁の場合レース番号まで指定しているので終了する
     if len(assume_id) ==12:
         break
 
 # https://race.netkeiba.com/race/shutuba.html?race_id=202408060511
+
 

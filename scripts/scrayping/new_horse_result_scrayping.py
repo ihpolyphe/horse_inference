@@ -92,6 +92,10 @@ class Results:
                     jockey_id_list.append(jockey_id[0])
                 df["horse_id"] = horse_id_list
                 df["jockey_id"] = jockey_id_list
+
+                # race_idを追加
+                df["race_id"] = [race_id] * len(df)
+
                 #インデックスをrace_idにする
                 df.index = [race_id] * len(df)
                 race_results[race_id] = df

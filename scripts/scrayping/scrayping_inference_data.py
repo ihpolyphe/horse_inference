@@ -61,6 +61,7 @@ def get_horse_info(column,assume_url,index):
     }
     r=requests.get(assume_url,headers=headers)
     soup = BeautifulSoup(r.content.decode("euc-jp", "ignore"), "html.parser")#バグ対策でdecode
+    # print(soup)
     soup_span = soup.find_all("span")
     allnum=(len(soup_span)-6)/3#馬の数
     allnum=int(allnum)
@@ -93,7 +94,8 @@ def get_horse_info(column,assume_url,index):
         horse_weight = 0
         #馬の情報
         try:
-            horse_name=soup.find_all("span",class_='HorseName')[n].contents[0].contents[0]
+            horse_name = soup.find_all("span", class_='HorseName')[n].find("a").get("title")
+            print(horse_name)
             count+=1
         except AttributeError:
             print("馬名取得失敗 AttributeError continue")
@@ -103,12 +105,16 @@ def get_horse_info(column,assume_url,index):
             continue
         # 馬のIDを取得する
         try:
-            horse_id = soup.find("span", class_="HorseName").find("a")['href'].split('/')[-1]
+            horse_id = soup.find_all("input", class_="NoteCheck")[n]['value']
+            print(horse_id)
         except AttributeError:
             print("馬ID取得失敗 AttributeError continue")
             continue
         except IndexError:
             print("馬ID取得失敗 IndexError continue")
+            continue
+        except TypeError:
+            print("馬ID取得失敗 TypeError continue")
             continue
 
         try:
@@ -161,7 +167,6 @@ def get_horse_info(column,assume_url,index):
         # horse_list = [horse_name,n,year,sex_,horse_weight,horse_weight_change_data,weight,class_,number_of_horse_,distance,condition,jokey,win_rate,rentairitu,hukusyouritu]
         # horse.append(horse_list)
         # horse_name_list.append(horse_name)
-
         race_data = [horse_name, 
                     count,
                      year,

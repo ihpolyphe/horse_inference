@@ -105,7 +105,8 @@ def get_horse_info(column,assume_url,index):
             continue
         # 馬のIDを取得する
         try:
-            horse_id = soup.find_all("input", class_="NoteCheck")[n]['value']
+            horse_url = soup.find_all("span", class_='HorseName')[n].find("a").get("href")
+            horse_id = horse_url.split('/')[-1]
             print(horse_id)
         except AttributeError:
             print("馬ID取得失敗 AttributeError continue")
@@ -207,7 +208,7 @@ def get_horse_info(column,assume_url,index):
                         ]
     column = ["horse_name", "umaban", "horse_age", "horse_sex","horse_weight",
                     "weight_change","handi",
-                    "jocky","horse_id","jokey_id","odds","goal_number"]
+                    "jocky","horse_id","jockey_id","odds","goal_number"]
     column_list = race_comon_column + column 
     # print(len(column_list))
     # print(column_list)
@@ -220,19 +221,29 @@ def get_horse_info(column,assume_url,index):
     horse_id_list = one_race_horse_data["horse_id"].values
     print(horse_id_list)
     horse_results = HorseResults()
-    horse_results_df = horse_results.scrayping(horse_id_list)
+    horse_results_df = horse_results.scrape(horse_id_list)
+
+    # horse_past_dataから最初のhorse_idの情報だけを抽出
+    first_horse_past_data = horse_results_df.drop_duplicates(subset='horse_id', keep='first')
+    # train_data = pd.merge(train_data, horse_peds_data, on='horse_id', how='left')
+
+    # train dataに対してhorse_past_data、horse_peds_dataをhorse_idをキーにして結合
+    one_race_horse_data = pd.merge(one_race_horse_data, first_horse_past_data, on='horse_id', how='left')
 
     # jokey_idのリストを入力にjockeyResultsクラスから騎手情報をスクレイピングする
-    jokey_id_list = one_race_horse_data["jokey_id"].values
+    jokey_id_list = one_race_horse_data["jockey_id"].values
     print(jokey_id_list)
     jockey_results = jockeyResults()
-    jockey_results_df = jockey_results.scrayping(jokey_id_list)
+    jockey_results_df = jockey_results.scrape(jokey_id_list)
 
-    # データフレームを結合する
-    one_race_horse_data = pd.concat(one_race_horse_data, horse_results_df, jockey_results_df)
+    # train_dataに対してjockey_past_dataをjockey_idをキーにして結合
+    # jockey_resultsから必要なjockey_idの情報だけを抽出
+    jockey_info = jockey_results_df[jockey_results_df['jockey_id'].isin(one_race_horse_data['jockey_id'])]
+
+    one_race_horse_data = pd.merge(one_race_horse_data, jockey_info, on='jockey_id', how='left')
 
     # データフレームをCSVに書き出し
-    one_race_horse_data.to_csv(path+"/inference_data_"+str(assume_id)+str(index) +".csv")
+    one_race_horse_data.to_csv(path+"/updated_inference_data_"+str(assume_id)+str(index) +".csv")
 
 
 
@@ -267,7 +278,7 @@ if is_denso:
 if not os.path.exists(path):
     os.makedirs(path)
 
-for i in tqdm.tqdm(range(1,13,1)):
+for i in tqdm.tqdm(range(1,2,1)):
     if len(assume_id) ==12:
         assume_url = "https://race.netkeiba.com/race/shutuba.html?race_id="+ str(assume_id)
     else:

@@ -5,6 +5,7 @@ import time
 import tqdm
 import pandas as pd
 import os
+from scrayping_class import Results, HorseResults, Peds, jockeyResults
 
 """
 指定したpage idにおけるレースごとの馬情報をスクレイピングする。(horse name と同じidを設定すること)
@@ -203,12 +204,27 @@ def get_horse_info(column,assume_url,index):
                     "weight_change","handi",
                     "jocky","horse_id","jokey_id","odds","goal_number"]
     column_list = race_comon_column + column 
-    print(len(column_list))
-    print(column_list)
-    print(len(race_common_data))
+    # print(len(column_list))
+    # print(column_list)
+    # print(len(race_common_data))
     # race_common_dataを2次元リストに変換
     # race_common_data = [race_common_data]
     one_race_horse_data = pd.DataFrame(race_data_list, columns=column_list)
+
+    # horse_idのリストを入力にHorseResultsクラスから馬情報をスクレイピングする
+    horse_id_list = one_race_horse_data["horse_id"].values
+    print(horse_id_list)
+    horse_results = HorseResults()
+    horse_results_df = horse_results.scrayping(horse_id_list)
+
+    # jokey_idのリストを入力にjockeyResultsクラスから騎手情報をスクレイピングする
+    jokey_id_list = one_race_horse_data["jokey_id"].values
+    print(jokey_id_list)
+    jockey_results = jockeyResults()
+    jockey_results_df = jockey_results.scrayping(jokey_id_list)
+
+    # データフレームを結合する
+    one_race_horse_data = pd.concat(one_race_horse_data, horse_results_df, jockey_results_df)
 
     # データフレームをCSVに書き出し
     one_race_horse_data.to_csv(path+"/inference_data_"+str(assume_id)+str(index) +".csv")

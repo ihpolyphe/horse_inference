@@ -235,6 +235,8 @@ def get_horse_info(column,assume_url,index):
     print(jokey_id_list)
     jockey_results = jockeyResults()
     jockey_results_df = jockey_results.scrape(jokey_id_list)
+    # その年と、累計データがスクレイピングされるので、累計データだけを抽出
+    jockey_results_df = jockey_results_df[jockey_results_df['年度'] == '累計']
 
     # train_dataに対してjockey_past_dataをjockey_idをキーにして結合
     # jockey_resultsから必要なjockey_idの情報だけを抽出
@@ -268,7 +270,7 @@ houseInfo = []
 
 # vscode 使う-> true
 debag_mode =False
-is_denso = True
+is_denso = False
 if debag_mode:
     path = os.path.join('/Users/hayat/Desktop/horse_inference/inference/',str(assume_id))
 else:
@@ -278,7 +280,7 @@ if is_denso:
 if not os.path.exists(path):
     os.makedirs(path)
 
-for i in tqdm.tqdm(range(1,2,1)):
+for i in tqdm.tqdm(range(1,13,1)):
     if len(assume_id) ==12:
         assume_url = "https://race.netkeiba.com/race/shutuba.html?race_id="+ str(assume_id)
     else:

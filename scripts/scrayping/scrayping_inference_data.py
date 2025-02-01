@@ -11,7 +11,7 @@ from scrayping_class import Results, HorseResults, Peds, jockeyResults
 指定したpage idにおけるレースごとの馬情報をスクレイピングする。(horse name と同じidを設定すること)
 以下のURLにおけるidを指定する。下二けたはレース番号のため、省略してassume_idに設定する。
 """
-assume_id = "2024060508"
+assume_id = "2025050101"
 
 
 def get_horse_info(column,assume_url,index):
@@ -222,6 +222,10 @@ def get_horse_info(column,assume_url,index):
     print(horse_id_list)
     horse_results = HorseResults()
     horse_results_df = horse_results.scrape(horse_id_list)
+    # horse_results_dfの中身が空のdataframeの場合、スクレイピングに失敗しているのでskipする
+    if horse_results_df.empty:
+        print("horse_results_df is empty. skip this")
+        return
 
     # horse_past_dataから最初のhorse_idの情報だけを抽出
     first_horse_past_data = horse_results_df.drop_duplicates(subset='horse_id', keep='first')

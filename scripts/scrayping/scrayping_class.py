@@ -173,9 +173,11 @@ class HorseResults:
             except:
                 break
 
-        #pd.DataFrame型にして一つのデータにまとめる        
-        horse_results_df = pd.concat([horse_results[key] for key in horse_results])
-
+        #pd.DataFrame型にして一つのデータにまとめる     
+        try:   
+            horse_results_df = pd.concat([horse_results[key] for key in horse_results])
+        except ValueError:
+            horse_results_df = pd.DataFrame()
         return horse_results_df
     
 

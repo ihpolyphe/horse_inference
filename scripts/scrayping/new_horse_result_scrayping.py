@@ -318,7 +318,7 @@ class jockeyResults:
 
 #============スクレイピング実行============
 race_id_list = []
-scrayping_year = "2024"
+scrayping_year = "2023"
 for place in range(1, 11, 1):
 # for place in range(1, 2, 1):
     for kai in range(1, 7, 1):

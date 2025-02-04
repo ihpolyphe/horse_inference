@@ -227,12 +227,36 @@ def get_horse_info(column,assume_url,index):
         print("horse_results_df is empty. skip this")
         return
 
+
     # horse_past_dataから最初のhorse_idの情報だけを抽出
     first_horse_past_data = horse_results_df.drop_duplicates(subset='horse_id', keep='first')
     # train_data = pd.merge(train_data, horse_peds_data, on='horse_id', how='left')
 
     # train dataに対してhorse_past_data、horse_peds_dataをhorse_idをキーにして結合
     one_race_horse_data = pd.merge(one_race_horse_data, first_horse_past_data, on='horse_id', how='left')
+    # ==========================================
+
+    # horse_id_listを入力にPedsクラスから馬の血統情報をスクレイピングする
+    peds = Peds()
+    horse_peds_data = peds.scrape(horse_id_list)
+    # peds_dfの中身が空のdataframeの場合、スクレイピングに失敗しているのでskipする
+    if horse_peds_data.empty:
+        print("peds_df is empty. skip this")
+        return
+
+    # horse_peds_dataはpeds62がhorse_idなので、peds62をhorse_idに変更
+    horse_peds_data = horse_peds_data.rename(columns={'peds_62': 'horse_id'})
+    # すごい馬の血糖情報があるけどそんなにいらないので、5頭分のpeds0からpeds5までの情報だけを取得
+    horse_peds_data = horse_peds_data[['horse_id', 'peds_0', 'peds_1', 'peds_2', 'peds_3', 'peds_4', 'peds_5']]
+    # 1pedsに色んな情報が入っているので、半角スペースまでの情報だけを取得
+    horse_peds_data['peds_0'] = horse_peds_data['peds_0'].apply(lambda x: x.split(' ')[0])
+    horse_peds_data['peds_1'] = horse_peds_data['peds_1'].apply(lambda x: x.split(' ')[0])
+    horse_peds_data['peds_2'] = horse_peds_data['peds_2'].apply(lambda x: x.split(' ')[0])
+    horse_peds_data['peds_3'] = horse_peds_data['peds_3'].apply(lambda x: x.split(' ')[0])
+    horse_peds_data['peds_4'] = horse_peds_data['peds_4'].apply(lambda x: x.split(' ')[0])
+    horse_peds_data['peds_5'] = horse_peds_data['peds_5'].apply(lambda x: x.split(' ')[0])
+    # train dataに対してhorse_peds_dataをhorse_idをキーにして結合
+    one_race_horse_data = pd.merge(one_race_horse_data, horse_peds_data, on='horse_id', how='left')
 
     # jokey_idのリストを入力にjockeyResultsクラスから騎手情報をスクレイピングする
     jokey_id_list = one_race_horse_data["jockey_id"].values

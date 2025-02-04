@@ -274,7 +274,7 @@ houseInfo = []
 
 # vscode 使う-> true
 debag_mode =False
-is_denso = False
+is_denso = True
 if debag_mode:
     path = os.path.join('/Users/hayat/Desktop/horse_inference/inference/',str(assume_id))
 else:

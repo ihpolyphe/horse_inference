@@ -8,3 +8,4 @@ result*
 ghostdriver*
 *csv
 data_for_train/*
+*pkl

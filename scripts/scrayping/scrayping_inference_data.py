@@ -11,7 +11,7 @@ from scrayping_class import Results, HorseResults, Peds, jockeyResults
 指定したpage idにおけるレースごとの馬情報をスクレイピングする。(horse name と同じidを設定すること)
 以下のURLにおけるidを指定する。下二けたはレース番号のため、省略してassume_idに設定する。
 """
-assume_id = "2025080106"
+assume_id = "2025050108"
 
 
 def get_horse_info(column,assume_url,index):
@@ -71,6 +71,24 @@ def get_horse_info(column,assume_url,index):
     data1=soup.find_all("div",class_='RaceData01')[0].contents[2].contents[0] #芝かダートか障害物か
     condition = data1[1:2]
     distance=int(data1[2:(len(data1)-1)])  # strから抽出　距離
+    # 天候の情報を抽出
+    weather_tag = soup.find('span', class_='Icon_Weather')
+    if weather_tag:
+        weather = weather_tag.previous_sibling.strip().split(':')[1]
+        print(f'天候: {weather}')
+    else:
+        print('天候情報が見つかりませんでした')
+        weather = None
+
+    # 馬場の情報を抽出
+    ground_state_tag = soup.find('span', class_='Item04')
+    if ground_state_tag:
+        ground_state = ground_state_tag.text.strip().split(':')[1]
+        print(f'馬場: {ground_state}')
+    else:
+        print('馬場情報が見つかりませんでした')
+        ground_state = None
+
     #<h1 class="RaceName">2歳未勝利から2歳未勝利をclass_に取得
     class_=soup.find_all("h1",class_='RaceName')[0].contents[0]
     # class_の改行コードを削除する
@@ -190,6 +208,8 @@ def get_horse_info(column,assume_url,index):
                 number_of_horse_,
                 distance ,
                 condition,
+                weather,
+                ground_state
         ]
         race_common_data += race_data
         race_data_list.append(race_common_data)
@@ -204,7 +224,9 @@ def get_horse_info(column,assume_url,index):
                         "class_list_in_race",
                         "number_of_horses",
                         "distance",
-                        "condition"
+                        "condition",
+                        "weather",
+                        "ground_state"
                         ]
     column = ["horse_name", "umaban", "horse_age", "horse_sex","horse_weight",
                     "weight_change","handi",

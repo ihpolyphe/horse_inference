@@ -25,6 +25,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
 import tqdm
+import pickle
+
 def preprocess(train_data, is_ranking=False, is_mlp=False):
     # 不要な特長量であるUnnamed: 0、class_list_in_raceを削除する
     # train_data = train_data.drop(['馬名','騎手_x', '人気',"調教師","枠番"], axis=1)
@@ -38,6 +40,12 @@ def preprocess(train_data, is_ranking=False, is_mlp=False):
     train_data['着順'] = train_data['着順'].apply(lambda x: int(x.split('(')[0]) if isinstance(x, str) else x)
     train_data['着順'] = train_data['着順'].astype(int)
     train_data['goal_number'] = train_data['着順']
+    train_data = train_data.rename(columns={'馬 場':'馬場'})
+    train_data = train_data.rename(columns={'天 気':'天気'})
+
+    # 予測に使用する特長量を定義する
+    # train_data.columns = train_data.columns.str.replace(' ', '')
+    # train_data.columns = train_data.columns.str.replace('　', '')
 
     if not is_ranking:
         # ランキング学習でない場合は通常のグルーピング
@@ -116,6 +124,9 @@ def preprocess(train_data, is_ranking=False, is_mlp=False):
         lambda x: float(x.replace('％', '')) if isinstance(x, str) else x
     )
 
+    # train_data = train_data.rename(columns={'天 気':'天気'})
+    # train_data = train_data.rename(columns={'馬 場':'馬場'})
+
     # オッズの逆数を取得し、オッズの逆数に格納する
     train_data['1/オ ッ ズ'] = train_data['オ ッ ズ'].apply(lambda x: 1 / x)
     # columnの名前を確認し、:や 、"、'がある場合は_に置き換える
@@ -147,7 +158,7 @@ def preprocess(train_data, is_ranking=False, is_mlp=False):
         "ground_state", # 分類特長量
 
         # ここからは馬の過去データから抽出できるので必要な情報を追加する
-        '天 気',
+        '天気',
         '頭 数',
         '枠番',
         '馬番',
@@ -157,7 +168,7 @@ def preprocess(train_data, is_ranking=False, is_mlp=False):
         # '着順', # 目的変数なので削除する
         '斤量',
         '距離',
-        '馬 場',
+        '馬場',
         'タイム_y',
         'pace1',
         'pace2',
@@ -200,16 +211,23 @@ def preprocess(train_data, is_ranking=False, is_mlp=False):
     # object型の特長量を確認する
     object_columns = train_data.select_dtypes(include='object').columns
     object_columns
+    # ラベルエンコーダーを保存する辞書
+    label_encoders = {}
     for column in object_columns:
         # print(column)
         le = LabelEncoder()
         # object型は別のラベル名にてラベルエンコーディングする
         train_data[column] = le.fit_transform(train_data[column])
-        # print(le.classes_)
+        label_encoders[column] = le
+    # ラベルエンコーダーを保存
+    with open('pkl_registory/label_encoders.pkl', 'wb') as f:
+        pickle.dump(label_encoders, f)
+        print(le.classes_)
     # 学習データが大きすぎるので、train_dataの上から1000行を取得して学習データとする
     # if not is_ranking:
     #     train_data = train_data[:50000]
     print(train_data.info())
+
     return train_data
 
 # 特長量の前処理①対数変換

@@ -22,7 +22,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
 import tqdm
-
+import pickle
 
 # オッズの差分を計算して新しい特徴量として追加
 def add_odds_differences_for_inference(df):
@@ -67,7 +67,6 @@ def preprocess_for_inference(inference_data):
     inference_data = inference_data.rename(columns={'重賞 出走':'重賞出走'})
     # 重賞 勝利は重賞勝利に変換する
     inference_data = inference_data.rename(columns={'重賞 勝利':'重賞勝利'})
-
     # 学習データとの共通処理
     # タイム_yは1:34.0のような形式なので、秒に変換する
     # nanの場合は100に変換する

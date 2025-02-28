@@ -197,7 +197,6 @@ def preprocess(train_data, is_ranking=False, is_mlp=False):
     if is_mlp:
         # race idを追加する
         features += ["race_id"]
-        features += ["着順"]
     # 特長量を抽出する
     if is_ranking:
         additional_features = ['log_odds', 'normalized_odds', 'zscore_odds', 'odds_rank', 'odds_std','odds_diff-1-2',"odds_diff-1-3"]
@@ -361,7 +360,7 @@ def create_query(df, name='train'):
     # date, race_name, place, number_of_horses, distanceのユニークな組み合わせを表示して確認
     print("\nUnique combinations of date, race_name, place, number_of_horses, distance:")
     # 上から100データを表示
-    print(df[['course_len', 'weather', 'race_type', 'ground_state', 'date']].head(100))
+    # print(df[['course_len', 'weather', 'race_type', 'ground_state', 'date']].head(100))
     return horse_counts_list, df
 
 # 予測結果の評価
@@ -434,10 +433,10 @@ def calculate_score_diff(df, modelname):
     return score_diff
 
 # 1位が正解した時、2位だった時、それ以外だった時のスコアの差を可視化
-def plot_score_diff(df, modelname):
-    correct_1st = df[(df[f'予測順位({modelname})'] == 1) & (df['着順'] == 1)]
-    second_place = df[(df[f'予測順位({modelname})'] == 1) & (df['着順'] == 2)]
-    other_places = df[(df[f'予測順位({modelname})'] == 1) & (df['着順'] > 2)]
+def plot_score_diff(df, modelname, N=1):
+    correct_1st = df[(df[f'予測順位({modelname})'] == N) & (df['着順'] == N)]
+    second_place = df[(df[f'予測順位({modelname})'] == N) & (df['着順'] == N+1)]
+    other_places = df[(df[f'予測順位({modelname})'] == N) & (df['着順'] > N+1)]
 
     plt.figure(figsize=(10, 6))
     sns.histplot(correct_1st[f'score_diff_{modelname}'], kde=True, color='green', label='Correct 1st', bins=50)
@@ -452,8 +451,8 @@ def plot_score_diff(df, modelname):
 from sklearn.metrics import roc_curve, precision_recall_curve
 
 # 最適な閾値を見つける
-def find_optimal_threshold(df, modelname):
-    y_true = (df['着順'] == 1).astype(int)
+def find_optimal_threshold(df, modelname, N):
+    y_true = (df['着順'] == N).astype(int)
     y_scores = df[f'score_diff_{modelname}']
 
     # ROC曲線を使用して最適な閾値を見つける
@@ -469,10 +468,12 @@ def find_optimal_threshold(df, modelname):
 
     return optimal_threshold, optimal_threshold_pr
 
-def apply_threshold(df, modelname, threshold):
+def apply_threshold(df, modelname, threshold, N):
     # 予測結果を閾値で分類
     # 予測スコアが閾値以上の場合かつ予測順位が1の時は1、それ以外は0
-    df[f'予測結果({modelname})'] = ((df[f'score_diff_{modelname}'] >= threshold) & (df[f'予測順位({modelname})'] == 1)).astype(int)
+    df[f'予測結果({modelname})'] = ((df[f'score_diff_{modelname}'] >= threshold) & (df[f'予測順位({modelname})'] == N)).astype(int)
+    # 予測順位が的中している場合は2を返す
+    df.loc[df[f'予測順位({modelname})'] == N, f'予測結果({modelname})'] = 2
     return df
 
 
@@ -519,165 +520,6 @@ def evaluate_predictions(df, modelname):
     plt.ylabel('Actual')
     plt.title(f'Confusion Matrix for {modelname}')
     plt.show()
-
-
-# =================
-# スコアの標準偏差を用いることで、ロバスト性が向上するかの確認をする取り組み
-# =================
-
-# # 1位のスコア/標準偏差を計算
-# def calculate_score_std_ratio(df, modelname):
-#     score_std_ratio = []
-#     for race_id, group in df.groupby('race_id'):
-#         std = group[f'予測スコア({modelname})'].std()
-#         for _, row in group.iterrows():
-#             score = row[f'予測スコア({modelname})']
-#             score_std_ratio.append(score / std if std != 0 else 0)
-#     return score_std_ratio
-
-# df_prediction_test_ranking['score_std_ratio_lambdarank'] = calculate_score_std_ratio(df_prediction_test_ranking, 'lambdarank')
-# df_prediction_test_ranking['score_std_ratio_RankNet'] = calculate_score_std_ratio(df_prediction_test_ranking, 'RankNet')
-# df_prediction_test_ranking['score_std_ratio_Pairwise'] = calculate_score_std_ratio(df_prediction_test_ranking, 'Pairwise')
-
-# # 1位-2位のスコア/標準偏差を計算
-# def calculate_score_diff_std_ratio(df, modelname):
-#     score_diff_std_ratio = []
-#     for race_id, group in df.groupby('race_id'):
-#         std = group[f'予測スコア({modelname})'].std()
-#         sorted_group = group.sort_values(f'予測スコア({modelname})', ascending=False)
-#         if len(sorted_group) >= 2:
-#             score_1 = sorted_group.iloc[0][f'予測スコア({modelname})']
-#             score_2 = sorted_group.iloc[1][f'予測スコア({modelname})']
-#             diff = score_1 - score_2
-#             score_diff_std_ratio.extend([diff / std if std != 0 else 0] * len(group))
-#         else:
-#             score_diff_std_ratio.extend([None] * len(group))
-#     return score_diff_std_ratio
-
-# df_prediction_test_ranking['score_diff_std_ratio_lambdarank'] = calculate_score_diff_std_ratio(df_prediction_test_ranking, 'lambdarank')
-# df_prediction_test_ranking['score_diff_std_ratio_RankNet'] = calculate_score_diff_std_ratio(df_prediction_test_ranking, 'RankNet')
-# df_prediction_test_ranking['score_diff_std_ratio_Pairwise'] = calculate_score_diff_std_ratio(df_prediction_test_ranking, 'Pairwise')
-
-# # 最適な閾値を見つける
-# def find_optimal_threshold(df, score_column):
-#     y_true = (df['着順'] == 1).astype(int)
-#     y_scores = df[score_column]
-
-#     fpr, tpr, thresholds = roc_curve(y_true, y_scores)
-#     optimal_idx = np.argmax(tpr - fpr)
-#     optimal_threshold = thresholds[optimal_idx]
-
-#     return optimal_threshold
-
-# optimal_threshold_score_std_ratio_lambdarank = find_optimal_threshold(df_prediction_test_ranking, 'score_std_ratio_lambdarank')
-# optimal_threshold_score_diff_std_ratio_lambdarank = find_optimal_threshold(df_prediction_test_ranking, 'score_diff_std_ratio_lambdarank')
-
-# optimal_threshold_score_std_ratio_ranknet = find_optimal_threshold(df_prediction_test_ranking, 'score_std_ratio_RankNet')
-# optimal_threshold_score_diff_std_ratio_ranknet = find_optimal_threshold(df_prediction_test_ranking, 'score_diff_std_ratio_RankNet')
-
-# optimal_threshold_score_std_ratio_pairwise = find_optimal_threshold(df_prediction_test_ranking, 'score_std_ratio_Pairwise')
-# optimal_threshold_score_diff_std_ratio_pairwise = find_optimal_threshold(df_prediction_test_ranking, 'score_diff_std_ratio_Pairwise')
-
-# print(f'Optimal Threshold (Score/Std) for lambdarank: {optimal_threshold_score_std_ratio_lambdarank}')
-# print(f'Optimal Threshold (Score Diff/Std) for lambdarank: {optimal_threshold_score_diff_std_ratio_lambdarank}')
-# print(f'Optimal Threshold (Score/Std) for RankNet: {optimal_threshold_score_std_ratio_ranknet}')
-# print(f'Optimal Threshold (Score Diff/Std) for RankNet: {optimal_threshold_score_diff_std_ratio_ranknet}')
-# print(f'Optimal Threshold (Score/Std) for Pairwise: {optimal_threshold_score_std_ratio_pairwise}')
-# print(f'Optimal Threshold (Score Diff/Std) for Pairwise: {optimal_threshold_score_diff_std_ratio_pairwise}')
-
-# def apply_threshold_std(df, modelname, threshold, score_type):
-#     if score_type == 'score_std_ratio':
-#         df[f'予測結果({modelname})_score_std_ratio'] = ((df[f'score_std_ratio_{modelname}'] >= threshold) & (df[f'予測順位({modelname})'] == 1)).astype(int)
-#     elif score_type == 'score_diff_std_ratio':
-#         df[f'予測結果({modelname})_score_diff_std_ratio'] = ((df[f'score_diff_std_ratio_{modelname}'] >= threshold) & (df[f'予測順位({modelname})'] == 1)).astype(int)
-#     return df
-
-# df_prediction_test_ranking = apply_threshold_std(df_prediction_test_ranking, 'lambdarank', optimal_threshold_score_std_ratio_lambdarank, 'score_std_ratio')
-# df_prediction_test_ranking = apply_threshold_std(df_prediction_test_ranking, 'lambdarank', optimal_threshold_score_diff_std_ratio_lambdarank, 'score_diff_std_ratio')
-
-# df_prediction_test_ranking = apply_threshold_std(df_prediction_test_ranking, 'RankNet', optimal_threshold_score_std_ratio_ranknet, 'score_std_ratio')
-# df_prediction_test_ranking = apply_threshold_std(df_prediction_test_ranking, 'RankNet', optimal_threshold_score_diff_std_ratio_ranknet, 'score_diff_std_ratio')
-
-# df_prediction_test_ranking = apply_threshold_std(df_prediction_test_ranking, 'Pairwise', optimal_threshold_score_std_ratio_pairwise, 'score_std_ratio')
-# df_prediction_test_ranking = apply_threshold_std(df_prediction_test_ranking, 'Pairwise', optimal_threshold_score_diff_std_ratio_pairwise, 'score_diff_std_ratio')
-
-# def evaluate_predictions_std(df, modelname):
-#     true_positive = df[
-#         (df[f'予測結果({modelname})_score_std_ratio'] == 1) & 
-#         (df['着順'] == 1)
-#     ].shape[0]
-
-#     false_positive = df[
-#         (df[f'予測結果({modelname})_score_std_ratio'] == 1) & 
-#         (df['着順'] != 1)
-#     ].shape[0]
-
-#     false_negative = df[
-#         (df[f'予測結果({modelname})_score_std_ratio'] != 1) & 
-#         (df['着順'] == 1)
-#     ].shape[0]
-
-#     true_negative = df[
-#         (df[f'予測結果({modelname})_score_std_ratio'] != 1) & 
-#         (df['着順'] != 1)
-#     ].shape[0]
-
-#     precision = true_positive / (true_positive + false_positive) if (true_positive + false_positive) > 0 else 0
-#     recall = true_positive / (true_positive + false_negative) if (true_positive + false_negative) > 0 else 0
-#     f1_score = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
-#     print("score_std_ratio")
-#     print(f'Precision for {modelname}: {precision:.4f}')
-#     print(f'Recall for {modelname}: {recall:.4f}')
-#     print(f'F1 Score for {modelname}: {f1_score:.4f}')
-
-#     confusion_matrix = np.array([[true_positive, false_negative],
-#                                 [false_positive, true_negative]])
-
-#     plt.figure(figsize=(8, 6))
-#     sns.heatmap(confusion_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=['Predicted 1', 'Predicted Not 1'], yticklabels=['Actual 1', 'Actual Not 1'])
-#     plt.xlabel('Predicted')
-#     plt.ylabel('Actual')
-#     plt.title(f'Confusion Matrix for {modelname}:score_diff_std_ratio')
-#     plt.show()
-
-#     true_positive = df[
-#         (df[f'予測結果({modelname})_score_diff_std_ratio'] == 1) & 
-#         (df['着順'] == 1)
-#     ].shape[0]
-
-#     false_positive = df[
-#         (df[f'予測結果({modelname})_score_diff_std_ratio'] == 1) & 
-#         (df['着順'] != 1)
-#     ].shape[0]
-
-#     false_negative = df[
-#         (df[f'予測結果({modelname})_score_diff_std_ratio'] != 1) & 
-#         (df['着順'] == 1)
-#     ].shape[0]
-
-#     true_negative = df[
-#         (df[f'予測結果({modelname})_score_diff_std_ratio'] != 1) & 
-#         (df['着順'] != 1)
-#     ].shape[0]
-
-#     precision = true_positive / (true_positive + false_positive) if (true_positive + false_positive) > 0 else 0
-#     recall = true_positive / (true_positive + false_negative) if (true_positive + false_negative) > 0 else 0
-#     f1_score = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
-#     print("score_diff_std_ratio")
-#     print(f'Precision for {modelname}: {precision:.4f}')
-#     print(f'Recall for {modelname}: {recall:.4f}')
-#     print(f'F1 Score for {modelname}: {f1_score:.4f}')
-
-#     confusion_matrix = np.array([[true_positive, false_negative],
-#                                 [false_positive, true_negative]])
-
-#     plt.figure(figsize=(8, 6))
-#     sns.heatmap(confusion_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=['Predicted 1', 'Predicted Not 1'], yticklabels=['Actual 1', 'Actual Not 1'])
-#     plt.xlabel('Predicted')
-#     plt.ylabel('Actual')
-#     plt.title(f'Confusion Matrix for {modelname}:score_diff_std_ratio')
-#     plt.show()
-
 
 # 予測結果の評価を行う関数
 def evaluate_predictions_without_cm(df, modelname):
@@ -793,3 +635,49 @@ def umaren_precision(df, modelname):
     print(y_true_total)
     print("precision rate {}".format(y_true_total / sum_))
     
+# for secandary prediction evaluate
+# 予測結果の評価
+def rank_evaluation_N(df_prediction_test_ranking, modelname='予測順位(lambdarank)', N=2):
+    true_positive = df_prediction_test_ranking[
+        (df_prediction_test_ranking[modelname] == N) & 
+        (df_prediction_test_ranking['着順'] == N)
+    ].shape[0]
+
+    false_positive = df_prediction_test_ranking[
+        (df_prediction_test_ranking[modelname] == N) & 
+        (df_prediction_test_ranking['着順'] != N)
+    ].shape[0]
+
+    false_negative = df_prediction_test_ranking[
+        (df_prediction_test_ranking[modelname] != N) & 
+        (df_prediction_test_ranking['着順'] == N)
+    ].shape[0]
+
+    true_negative = df_prediction_test_ranking[
+        (df_prediction_test_ranking[modelname] != N) & 
+        (df_prediction_test_ranking['着順'] != N)
+    ].shape[0]
+
+    print(f'True Positive: {true_positive}')
+    print(f'False Positive: {false_positive}')
+    print(f'False Negative: {false_negative}')
+    print(f'True Negative: {true_negative}')
+    # presicion, recall, f1 scoreの計算
+    precision = true_positive / (true_positive + false_positive)
+    recall = true_positive / (true_positive + false_negative)
+    f1 = 2 * precision * recall / (precision + recall)
+    print(f'Precision: {precision:.4f}')
+    print(f'Recall: {recall:.4f}')
+    print(f'F1 Score: {f1:.4f}')
+
+    # Confusion Matrixの作成
+    confusion_matrix = np.array([[true_positive, false_negative],
+                                [false_positive, true_negative]])
+
+    # Confusion Matrixの可視化
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(confusion_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=['Predicted 1', 'Predicted Not 1'], yticklabels=['Actual 1', 'Actual Not 1'])
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
+    plt.title('Confusion Matrix')
+    plt.show()

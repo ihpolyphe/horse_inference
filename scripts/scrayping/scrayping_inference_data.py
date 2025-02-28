@@ -11,7 +11,7 @@ from scrayping_class import Results, HorseResults, Peds, jockeyResults
 指定したpage idにおけるレースごとの馬情報をスクレイピングする。(horse name と同じidを設定すること)
 以下のURLにおけるidを指定する。下二けたはレース番号のため、省略してassume_idに設定する。
 """
-assume_id = "2025050108"
+assume_id = "2025060201"
 
 
 def get_horse_info(column,assume_url,index):

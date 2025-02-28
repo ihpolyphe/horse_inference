@@ -38,9 +38,13 @@ def add_odds_differences_for_inference(df):
         df['odds_diff-1-3'] = None
     return df
 
-def preprocess_for_inference(inference_data):
-    inference_data_answer = inference_data["goal_number"]
-    inference_data = inference_data.drop("goal_number", axis=1)
+def preprocess_for_inference(inference_data, second=False):
+    if not second:
+        inference_data_answer = inference_data["goal_number"]
+        inference_data = inference_data.drop("goal_number", axis=1)
+    else:
+        # 2回目の予測の場合はgoal_numberがないので、ダミーの値を入れる
+        inference_data_answer = [None] * len(inference_data)
 
     # 学習データとカラム名を統一する
     # 枠 番は枠番に変換する
@@ -153,15 +157,20 @@ def calculate_score_diff(df, modelname):
             score_diff.extend([None] * len(group))
     return score_diff
 
-def prediction_print(df_prediction_test_ranking, optimal_threshold_lambdarank, optimal_threshold_ranknet, optimal_threshold_pairwise):
+def prediction_print(df_prediction_test_ranking, optimal_threshold_lambdarank, optimal_threshold_ranknet, optimal_threshold_pairwise, N=1):
     # 予測スコアの差を計算
     df_prediction_test_ranking['score_diff_lambdarank'] = calculate_score_diff(df_prediction_test_ranking, 'lambdarank')
     df_prediction_test_ranking['score_diff_RankNet'] = calculate_score_diff(df_prediction_test_ranking, 'RankNet')
     df_prediction_test_ranking['score_diff_Pairwise'] = calculate_score_diff(df_prediction_test_ranking, 'Pairwise')
     # 閾値を適用して1位を予測
-    df_prediction_test_ranking = apply_threshold(df_prediction_test_ranking, 'lambdarank', optimal_threshold_lambdarank)
-    df_prediction_test_ranking = apply_threshold(df_prediction_test_ranking, 'RankNet', optimal_threshold_ranknet)
-    df_prediction_test_ranking = apply_threshold(df_prediction_test_ranking, 'Pairwise', optimal_threshold_pairwise)
+    if N == 1:
+        df_prediction_test_ranking = __apply_threshold(df_prediction_test_ranking, 'lambdarank', optimal_threshold_lambdarank)
+        df_prediction_test_ranking = __apply_threshold(df_prediction_test_ranking, 'RankNet', optimal_threshold_ranknet)
+        df_prediction_test_ranking = __apply_threshold(df_prediction_test_ranking, 'Pairwise', optimal_threshold_pairwise)
+    else:
+        df_prediction_test_ranking = __apply_threshold_second(df_prediction_test_ranking, 'lambdarank', optimal_threshold_lambdarank)
+        df_prediction_test_ranking = __apply_threshold_second(df_prediction_test_ranking, 'RankNet', optimal_threshold_ranknet)
+        df_prediction_test_ranking = __apply_threshold_second(df_prediction_test_ranking, 'Pairwise', optimal_threshold_pairwise)
 
     # 予測結果{modelname}の中で1がある場合はその情報を出力
     if df_prediction_test_ranking['予測結果(lambdarank)'].sum() > 0:
@@ -300,8 +309,17 @@ def add_prediction_info(df_prediction_test_ranking):
     else:
         print("No buy candidates found.")
 
-def apply_threshold(df, modelname, threshold):
+def __apply_threshold(df, modelname, threshold, N=1):
     # 予測結果を閾値で分類
     # 予測スコアが閾値以上の場合かつ予測順位が1の時は1、それ以外は0
-    df[f'予測結果({modelname})'] = ((df[f'score_diff_{modelname}'] >= threshold) & (df[f'予測順位({modelname})'] == 1)).astype(int)
+    df[f'予測結果({modelname})'] = ((df[f'score_diff_{modelname}'] >= threshold) & (df[f'予測順位({modelname})'] == N)).astype(int)
+    return df
+
+
+def __apply_threshold_second(df, modelname, threshold, N=1):
+    # 予測結果を閾値で分類
+    # 予測スコアが閾値以上の場合かつ予測順位が1の時は1、それ以外は0
+    df[f'予測結果({modelname})'] = ((df[f'score_diff_{modelname}'] >= threshold) & (df[f'予測順位({modelname})'] == N)).astype(int)
+    # 予測順位が的中している場合は2を返す
+    df.loc[df[f'予測順位({modelname})'] == N, f'予測結果({modelname})'] = 2
     return df

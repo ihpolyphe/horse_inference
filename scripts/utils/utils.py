@@ -451,7 +451,7 @@ def plot_score_diff(df, modelname, N=1):
 from sklearn.metrics import roc_curve, precision_recall_curve
 
 # 最適な閾値を見つける
-def find_optimal_threshold(df, modelname, N):
+def find_optimal_threshold(df, modelname, N=1):
     y_true = (df['着順'] == N).astype(int)
     y_scores = df[f'score_diff_{modelname}']
 
@@ -468,14 +468,17 @@ def find_optimal_threshold(df, modelname, N):
 
     return optimal_threshold, optimal_threshold_pr
 
-def apply_threshold(df, modelname, threshold, N):
+def apply_threshold(df, modelname, threshold):
     # 予測結果を閾値で分類
     # 予測スコアが閾値以上の場合かつ予測順位が1の時は1、それ以外は0
-    df[f'予測結果({modelname})'] = ((df[f'score_diff_{modelname}'] >= threshold) & (df[f'予測順位({modelname})'] == N)).astype(int)
-    # 予測順位が的中している場合は2を返す
-    df.loc[df[f'予測順位({modelname})'] == N, f'予測結果({modelname})'] = 2
+    df[f'予測結果({modelname})'] = ((df[f'score_diff_{modelname}'] >= threshold) & (df[f'予測順位({modelname})'] == 1)).astype(int)
     return df
 
+def apply_threshold_second(df, modelname, threshold):
+    # 予測結果を閾値で分類
+    # 予測スコアが閾値以上の場合かつ予測順位がNの時は2、それ以外は0
+    df[f'予測結果({modelname})'] = ((df[f'score_diff_{modelname}'] >= threshold) & (df[f'予測順位({modelname})'] == 2)).astype(int) * 2
+    return df
 
 
 # 予測精度を評価し、Confusion Matrixを出力

@@ -376,3 +376,19 @@ def amsanble_prediction_evaluate(df_prediction_test_ranking, N=2):
         print(buy_candidates_one_not_first)
     else:
         print("No buy candidates found.")
+
+def find_candidates_for_second_inference(df, N):
+    # 3つのモデルが同じ順位を予測するか、3つのモデルのうち2つのモデルがN位と予測し、かつ予測スコア(lambdarank)が10以上のデータをNとして返す
+    candidates = df[
+        ((df[f'予測順位(lambdarank)'] == N) & (df[f'予測順位(RankNet)'] == N) & (df[f'予測順位(Pairwise)'] == N)) |
+        (((df[f'予測順位(lambdarank)'] == N) & (df[f'予測順位(RankNet)'] == N)) |
+         ((df[f'予測順位(lambdarank)'] == N) & (df[f'予測順位(Pairwise)'] == N)) |
+         ((df[f'予測順位(RankNet)'] == N) & (df[f'予測順位(Pairwise)'] == N))) &
+        (df[f'予測スコア(lambdarank)'] >= 10)
+    ]
+    
+    # 予測結果をNに設定
+    df[f'予測結果({N})'] = 0
+    df.loc[candidates.index, f'予測結果({N})'] = N
+    
+    return df

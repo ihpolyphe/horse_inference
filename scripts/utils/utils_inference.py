@@ -323,3 +323,56 @@ def __apply_threshold_second(df, modelname, threshold, N=1):
     # 予測順位が的中している場合は2を返す
     df.loc[df[f'予測順位({modelname})'] == N, f'予測結果({modelname})'] = 2
     return df
+
+def amsanble_prediction_evaluate(df_prediction_test_ranking, N=2):
+    # テストデータにフィットしてきはじめているのである程度のところで終了するのも大切
+    # 各モデルのスコアをROC曲線から最適な閾値を決定してコンフュージョンマトリックスで評価
+    # モデルの2つ以上がN位と予測したらそれを回答とする＋スコアの閾値も追加して予測
+    # pairwise以外の一位関連のスコア特徴量も出してみる
+
+    buy_candidates_all_positive = df_prediction_test_ranking[
+        (df_prediction_test_ranking["予測順位(lambdarank)"] == 1) &
+        (df_prediction_test_ranking["予測順位(RankNet)"] == 1) &
+        (df_prediction_test_ranking["予測順位(Pairwise)"] == 1) &
+        (df_prediction_test_ranking["予測スコア(lambdarank)"] > 0) &
+        (df_prediction_test_ranking["予測スコア(RankNet)"] > 0) &
+        (df_prediction_test_ranking["予測スコア(Pairwise)"] > 0)
+    ]
+
+    # 1つのモデルのスコアがマイナスでも他のモデルのスコアが0以上で1着のものをフィルタリング
+    buy_candidates_one_negative = df_prediction_test_ranking[
+        ((df_prediction_test_ranking['予測順位(lambdarank)'] == 1) & (df_prediction_test_ranking['予測スコア(lambdarank)'] > 0) &
+        (df_prediction_test_ranking['予測順位(Pairwise)'] == 1) & (df_prediction_test_ranking['予測スコア(Pairwise)'] > 0) &
+        (df_prediction_test_ranking['予測順位(RankNet)'] == 1) & (df_prediction_test_ranking['予測スコア(RankNet)'] <= 0)) |
+        ((df_prediction_test_ranking['予測順位(lambdarank)'] == 1) & (df_prediction_test_ranking['予測スコア(lambdarank)'] > 0) &
+        (df_prediction_test_ranking['予測順位(Pairwise)'] == 1) & (df_prediction_test_ranking['予測スコア(Pairwise)'] <= 0) &
+        (df_prediction_test_ranking['予測順位(RankNet)'] == 1) & (df_prediction_test_ranking['予測スコア(RankNet)'] > 0)) |
+        ((df_prediction_test_ranking['予測順位(lambdarank)'] == 1) & (df_prediction_test_ranking['予測スコア(lambdarank)'] <= 0) &
+        (df_prediction_test_ranking['予測順位(Pairwise)'] == 1) & (df_prediction_test_ranking['予測スコア(Pairwise)'] > 0) &
+        (df_prediction_test_ranking['予測順位(RankNet)'] == 1) & (df_prediction_test_ranking['予測スコア(RankNet)'] > 0))
+    ]
+
+    # スコアがすべて正のとき1つのモデルの順位が1でない場合をフィルタリング
+    buy_candidates_one_not_first = df_prediction_test_ranking[
+        ((df_prediction_test_ranking['予測順位(lambdarank)'] == 1) & (df_prediction_test_ranking['予測スコア(lambdarank)'] > 0) &
+        (df_prediction_test_ranking['予測順位(Pairwise)'] == 1) & (df_prediction_test_ranking['予測スコア(Pairwise)'] > 0) &
+        (df_prediction_test_ranking['予測順位(RankNet)'] != 1) & (df_prediction_test_ranking['予測スコア(RankNet)'] > 0)) |
+        ((df_prediction_test_ranking['予測順位(lambdarank)'] == 1) & (df_prediction_test_ranking['予測スコア(lambdarank)'] > 0) &
+        (df_prediction_test_ranking['予測順位(Pairwise)'] != 1) & (df_prediction_test_ranking['予測スコア(Pairwise)'] > 0) &
+        (df_prediction_test_ranking['予測順位(RankNet)'] == 1) & (df_prediction_test_ranking['予測スコア(RankNet)'] > 0)) |
+        ((df_prediction_test_ranking['予測順位(lambdarank)'] != 1) & (df_prediction_test_ranking['予測スコア(lambdarank)'] > 0) &
+        (df_prediction_test_ranking['予測順位(Pairwise)'] == 1) & (df_prediction_test_ranking['予測スコア(Pairwise)'] > 0) &
+        (df_prediction_test_ranking['予測順位(RankNet)'] == 1) & (df_prediction_test_ranking['予測スコア(RankNet)'] > 0))
+    ]
+    # 買い目として出力
+    if not buy_candidates_all_positive.empty:
+        print("Buy candidates (all positive scores and all ranks 1):")
+        print(buy_candidates_all_positive)
+    elif not buy_candidates_one_negative.empty:
+        print("Buy candidates (one negative score but all ranks 1):")
+        print(buy_candidates_one_negative)
+    elif not buy_candidates_one_not_first.empty:
+        print("Buy candidates (all positive scores but one rank not 1):")
+        print(buy_candidates_one_not_first)
+    else:
+        print("No buy candidates found.")

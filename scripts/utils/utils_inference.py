@@ -171,7 +171,8 @@ def prediction_print(df_prediction_test_ranking, optimal_threshold_lambdarank, o
         df_prediction_test_ranking = __apply_threshold_second(df_prediction_test_ranking, 'lambdarank', optimal_threshold_lambdarank)
         df_prediction_test_ranking = __apply_threshold_second(df_prediction_test_ranking, 'RankNet', optimal_threshold_ranknet)
         df_prediction_test_ranking = __apply_threshold_second(df_prediction_test_ranking, 'Pairwise', optimal_threshold_pairwise)
-
+    
+    print("1位と2位のスコア差が大きければ1位と予測する")
     # 予測結果{modelname}の中で1がある場合はその情報を出力
     if df_prediction_test_ranking['予測結果(lambdarank)'].sum() > 0:
         print(f'\033[92m1位と予測した数(lambdarank): {df_prediction_test_ranking["予測結果(lambdarank)"].sum()}\033[0m')
@@ -259,7 +260,7 @@ def prediction_print(df_prediction_test_ranking, optimal_threshold_lambdarank, o
             print("\033[34mground_stateは0以外の時正答率高い\033[0m")
         else:
             print("スコアは高いけど、ground_stateが0の時は微妙")
-        return df_prediction_test_ranking
+    return df_prediction_test_ranking
 
 def add_prediction_info(df_prediction_test_ranking):
     buy_candidates_all_positive = df_prediction_test_ranking[
@@ -312,6 +313,7 @@ def add_prediction_info(df_prediction_test_ranking):
 def __apply_threshold(df, modelname, threshold, N=1):
     # 予測結果を閾値で分類
     # 予測スコアが閾値以上の場合かつ予測順位が1の時は1、それ以外は0
+
     df[f'予測結果({modelname})'] = ((df[f'score_diff_{modelname}'] >= threshold) & (df[f'予測順位({modelname})'] == N)).astype(int)
     return df
 
